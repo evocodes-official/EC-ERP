@@ -11,7 +11,7 @@ const Navbar = () => {
           placeholder="Search modules..."
           className="w-full bg-gray-50 pl-9 pr-4 py-1.5 rounded-lg text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all"
         />
-      </div>w
+      </div>
 
       <div className="flex items-center space-x-3">
         <button className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1.5 rounded-md font-semibold transition-colors">
