@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
+import * as XLSX from 'xlsx';
 import {
-  Users,
   CheckCircle2,
   Clock,
   Star,
@@ -14,13 +14,44 @@ import {
   Eye,
   UserCheck,
   Plane,
-  Sparkles,
+  Search,
+  Filter,
+  X,
+  Camera,
+  Mail,
+  Building2,
+  Briefcase,
+  CalendarCheck,
+  User,
+  Save,
 } from 'lucide-react';
 
 const HRContent = () => {
   const [selectedAll, setSelectedAll] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deptFilter, setDeptFilter] = useState('All Departments');
+  const [attendanceFilter, setAttendanceFilter] = useState('All Attendance');
+  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
+  const [showAttendanceDropdown, setShowAttendanceDropdown] = useState(false);
 
-  const employees = [
+  // Modal States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  // Form States
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formDept, setFormDept] = useState('Engineering');
+  const [formRole, setFormRole] = useState('');
+  const [formAttendance, setFormAttendance] = useState('On-site');
+  const [formAvatar, setFormAvatar] = useState(null);
+  const [formAvatarPreview, setFormAvatarPreview] = useState('');
+  const fileInputRef = useRef(null);
+
+  const [employees, setEmployees] = useState([
     {
       id: 1,
       name: 'Elena Rodriguez',
@@ -73,7 +104,166 @@ const HRContent = () => {
       performance: 78,
       perfColor: 'bg-emerald-500',
     },
-  ];
+  ]);
+
+  // Department style mapping
+  const getDeptStyle = (dept) => {
+    switch (dept) {
+      case 'Engineering': return 'bg-blue-50 text-blue-600';
+      case 'Design': return 'bg-cyan-50 text-cyan-600';
+      case 'Sales': return 'bg-purple-50 text-purple-600';
+      case 'Marketing': return 'bg-pink-50 text-pink-600';
+      case 'HR': return 'bg-emerald-50 text-emerald-600';
+      case 'Finance': return 'bg-amber-50 text-amber-600';
+      default: return 'bg-slate-50 text-slate-600';
+    }
+  };
+
+  // Attendance dot style mapping
+  const getAttendanceDot = (attendance) => {
+    switch (attendance) {
+      case 'On-site': return 'bg-emerald-500';
+      case 'Remote': return 'bg-blue-600';
+      case 'O.O.O': return 'bg-amber-500';
+      case 'Hybrid': return 'bg-indigo-500';
+      default: return 'bg-slate-400';
+    }
+  };
+
+  // Unique departments for filter
+  const departments = ['All Departments', ...new Set(employees.map(e => e.dept))];
+  const attendanceOptions = ['All Attendance', 'On-site', 'Remote', 'O.O.O', 'Hybrid'];
+
+  // Filtered employees based on search + filters
+  const filteredEmployees = employees.filter((emp) => {
+    // Search filter (name, email, dept, role)
+    const searchMatch = 
+      emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.dept.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      emp.role.toLowerCase().includes(searchQuery.toLowerCase());
+
+    // Department filter
+    const deptMatch = deptFilter === 'All Departments' || emp.dept === deptFilter;
+
+    // Attendance filter
+    const attendanceMatch = attendanceFilter === 'All Attendance' || emp.attendance === attendanceFilter;
+
+    return searchMatch && deptMatch && attendanceMatch;
+  });
+
+  // Export to Excel
+  const handleExport = () => {
+    const exportData = filteredEmployees.map((emp) => ({
+      'Employee Name': emp.name,
+      'Email': emp.email,
+      'Department': emp.dept,
+      'Role': emp.role,
+      'Attendance': emp.attendance,
+      'Performance (%)': emp.performance,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Employees');
+    XLSX.writeFile(workbook, 'HR_Employee_Directory.xlsx');
+  };
+
+  // Open Create Modal
+  const handleOpenCreateModal = () => {
+    setIsEditMode(false);
+    setEditingEmployeeId(null);
+    setFormName('');
+    setFormEmail('');
+    setFormDept('Engineering');
+    setFormRole('');
+    setFormAttendance('On-site');
+    setFormAvatar(null);
+    setFormAvatarPreview('');
+    setIsModalOpen(true);
+  };
+
+  // Open Edit Modal with prefilled data
+  const handleOpenEditModal = (emp) => {
+    setIsEditMode(true);
+    setEditingEmployeeId(emp.id);
+    setFormName(emp.name);
+    setFormEmail(emp.email);
+    setFormDept(emp.dept);
+    setFormRole(emp.role);
+    setFormAttendance(emp.attendance);
+    setFormAvatar(null);
+    setFormAvatarPreview(emp.avatar);
+    setIsModalOpen(true);
+  };
+
+  // Open Details Modal
+  const handleOpenDetailsModal = (emp) => {
+    setSelectedEmployee(emp);
+    setIsDetailsModalOpen(true);
+  };
+
+  // Handle avatar file upload
+  const handleAvatarUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFormAvatar(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setFormAvatarPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Save employee (create or edit)
+  const handleSaveEmployee = (e) => {
+    e.preventDefault();
+    if (!formName.trim() || !formEmail.trim() || !formRole.trim()) return;
+
+    if (isEditMode && editingEmployeeId) {
+      // Edit existing employee
+      setEmployees(prev => prev.map(emp => {
+        if (emp.id === editingEmployeeId) {
+          return {
+            ...emp,
+            name: formName,
+            email: formEmail,
+            dept: formDept,
+            deptStyle: getDeptStyle(formDept),
+            role: formRole,
+            attendance: formAttendance,
+            attendanceDot: getAttendanceDot(formAttendance),
+            avatar: formAvatarPreview || emp.avatar,
+          };
+        }
+        return emp;
+      }));
+    } else {
+      // Create new employee
+      const newEmployee = {
+        id: employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1,
+        name: formName,
+        email: formEmail,
+        avatar: formAvatarPreview || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
+        dept: formDept,
+        deptStyle: getDeptStyle(formDept),
+        role: formRole,
+        attendance: formAttendance,
+        attendanceDot: getAttendanceDot(formAttendance),
+        performance: 0,
+        perfColor: 'bg-slate-400',
+      };
+      setEmployees(prev => [...prev, newEmployee]);
+    }
+
+    setIsModalOpen(false);
+  };
+
+  // Delete employee
+  const handleDeleteEmployee = (empId) => {
+    setEmployees(prev => prev.filter(emp => emp.id !== empId));
+  };
 
   return (
     <div className="space-y-6">
@@ -82,9 +272,9 @@ const HRContent = () => {
         {/* Total Headcount */}
         <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
           <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Headcount</p>
-          <h3 className="text-3xl font-extrabold text-gray-900 mt-2">1,284</h3>
+          <h3 className="text-3xl font-extrabold text-gray-900 mt-2">{employees.length}</h3>
           <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
-            <span>📈</span> +12 this month
+            <span>📈</span> +{employees.length} this month
           </p>
         </div>
 
@@ -126,20 +316,87 @@ const HRContent = () => {
           </div>
 
           <div className="flex items-center space-x-3">
-            <button className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm">
-              <span>All Departments</span>
-              <ChevronDown size={14} className="text-gray-400" />
-            </button>
+            {/* Department Filter Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => { setShowDeptDropdown(!showDeptDropdown); setShowAttendanceDropdown(false); }}
+                className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+              >
+                <Filter size={14} className="text-gray-400" />
+                <span>{deptFilter}</span>
+                <ChevronDown size={14} className="text-gray-400" />
+              </button>
+              {showDeptDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1">
+                  {departments.map((dept) => (
+                    <button
+                      key={dept}
+                      onClick={() => { setDeptFilter(dept); setShowDeptDropdown(false); }}
+                      className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors ${deptFilter === dept ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                    >
+                      {dept}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            <button className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm">
+            {/* Attendance Filter Dropdown */}
+            <div className="relative">
+              <button 
+                onClick={() => { setShowAttendanceDropdown(!showAttendanceDropdown); setShowDeptDropdown(false); }}
+                className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+              >
+                <CalendarCheck size={14} className="text-gray-400" />
+                <span>{attendanceFilter}</span>
+                <ChevronDown size={14} className="text-gray-400" />
+              </button>
+              {showAttendanceDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1">
+                  {attendanceOptions.map((att) => (
+                    <button
+                      key={att}
+                      onClick={() => { setAttendanceFilter(att); setShowAttendanceDropdown(false); }}
+                      className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors ${attendanceFilter === att ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                    >
+                      {att}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Export Button */}
+            <button 
+              onClick={handleExport}
+              className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+            >
               <Download size={14} className="text-gray-500" />
               <span>Export</span>
             </button>
 
-            <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors">
+            {/* Add Employee Button */}
+            <button 
+              onClick={handleOpenCreateModal}
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors"
+            >
               <UserPlus size={15} />
               <span>Add Employee</span>
             </button>
+          </div>
+        </div>
+
+        {/* Search Bar */}
+        <div className="px-6 py-3 bg-gray-50/50 border-b border-gray-100">
+          <div className="relative max-w-md">
+            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search by name, email, department, or role..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full bg-white border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+            />
           </div>
         </div>
 
@@ -163,7 +420,7 @@ const HRContent = () => {
           </div>
 
           <div className="flex items-center space-x-3">
-            <span>Showing 1-10 of 1,284</span>
+            <span>Showing {filteredEmployees.length} of {employees.length}</span>
             <div className="flex items-center space-x-1">
               <button className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"><ChevronLeft size={16} /></button>
               <button className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"><ChevronRight size={16} /></button>
@@ -186,7 +443,7 @@ const HRContent = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-xs font-medium text-gray-700">
-              {employees.map((emp) => (
+              {filteredEmployees.map((emp) => (
                 <tr key={emp.id} className="hover:bg-blue-50/30 transition-colors group">
                   <td className="py-4 px-6">
                     <input
@@ -227,30 +484,52 @@ const HRContent = () => {
                   </td>
                   <td className="py-4 px-6 text-right">
                     <div className="flex items-center justify-end space-x-2 text-gray-400">
-                      <button className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleOpenEditModal(emp)}
+                        className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="Edit Employee"
+                      >
                         <Edit2 size={15} />
                       </button>
-                      <button className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleOpenDetailsModal(emp)}
+                        className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="View Details"
+                      >
                         <Eye size={15} />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteEmployee(emp.id)}
+                        className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Delete Employee"
+                      >
+                        <Trash2 size={15} />
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
+              {filteredEmployees.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="py-12 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <Search size={24} className="text-gray-300" />
+                      <p className="text-sm font-semibold text-gray-500">No employees found</p>
+                      <p className="text-xs text-gray-400">Try adjusting your search or filter criteria.</p>
+                    </div>
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
 
         {/* Pagination Footer */}
         <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <span className="text-gray-500 font-medium">Page 1 of 129</span>
+          <span className="text-gray-500 font-medium">Page 1 of 1</span>
           <div className="flex items-center space-x-1">
             <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium">Previous</button>
             <button className="px-3 py-1.5 bg-blue-600 text-white font-bold rounded-lg">1</button>
-            <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium">2</button>
-            <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium">3</button>
-            <span className="px-2 text-gray-400">...</span>
-            <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium">129</button>
             <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium">Next</button>
           </div>
         </div>
@@ -362,6 +641,262 @@ const HRContent = () => {
           </div>
         </div>
       </div>
+
+      {/* CREATE / EDIT EMPLOYEE MODAL */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+            >
+              <X size={20} />
+            </button>
+
+            <h3 className="text-xl font-bold text-gray-900 mb-1">
+              {isEditMode ? 'Edit Employee' : 'Add New Employee'}
+            </h3>
+            <p className="text-xs text-gray-500 mb-6">
+              {isEditMode ? 'Modify existing employee details below.' : 'Fill in the details to add a new employee to the directory.'}
+            </p>
+
+            <form onSubmit={handleSaveEmployee} className="space-y-4">
+              {/* Profile Picture Upload */}
+              <div className="flex flex-col items-center mb-4">
+                <div className="relative">
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-100 bg-gray-100 flex items-center justify-center">
+                    {formAvatarPreview ? (
+                      <img src={formAvatarPreview} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <User size={40} className="text-gray-300" />
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 transition-colors"
+                    title="Upload Profile Picture"
+                  >
+                    <Camera size={14} />
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    className="hidden"
+                  />
+                </div>
+                <p className="text-[11px] text-gray-400 mt-2 font-medium">Click camera to upload profile picture</p>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
+                <div className="relative">
+                  <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="Enter employee name"
+                    value={formName}
+                    onChange={(e) => setFormName(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Email Address</label>
+                <div className="relative">
+                  <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="email" 
+                    required
+                    placeholder="employee@evo-erp.com"
+                    value={formEmail}
+                    onChange={(e) => setFormEmail(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Department */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Department</label>
+                <div className="relative">
+                  <Building2 size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <select 
+                    value={formDept}
+                    onChange={(e) => setFormDept(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  >
+                    <option value="Engineering">Engineering</option>
+                    <option value="Design">Design</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Marketing">Marketing</option>
+                    <option value="HR">HR</option>
+                    <option value="Finance">Finance</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Role */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Role / Position</label>
+                <div className="relative">
+                  <Briefcase size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input 
+                    type="text" 
+                    required
+                    placeholder="e.g. Frontend Developer"
+                    value={formRole}
+                    onChange={(e) => setFormRole(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              {/* Attendance */}
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Attendance Status</label>
+                <div className="relative">
+                  <CalendarCheck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <select 
+                    value={formAttendance}
+                    onChange={(e) => setFormAttendance(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer"
+                  >
+                    <option value="On-site">On-site</option>
+                    <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="O.O.O">O.O.O</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2"
+                >
+                  <Save size={14} />
+                  {isEditMode ? 'Save Changes' : 'Add Employee'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* EMPLOYEE DETAILS MODAL */}
+      {isDetailsModalOpen && selectedEmployee && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+            <button 
+              onClick={() => setIsDetailsModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header with Avatar */}
+            <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
+              <img 
+                src={selectedEmployee.avatar} 
+                alt={selectedEmployee.name} 
+                className="w-20 h-20 rounded-full object-cover border-4 border-blue-100 shadow-md"
+              />
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900">{selectedEmployee.name}</h3>
+                <p className="text-sm text-gray-500">{selectedEmployee.email}</p>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold ${selectedEmployee.deptStyle}`}>
+                    {selectedEmployee.dept}
+                  </span>
+                  <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                    <span className={`w-2 h-2 rounded-full ${selectedEmployee.attendanceDot}`}></span>
+                    {selectedEmployee.attendance}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Employee Details Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Employee ID</p>
+                <p className="text-sm font-bold text-gray-900">EMP-{String(selectedEmployee.id).padStart(4, '0')}</p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Role</p>
+                <p className="text-sm font-bold text-gray-900">{selectedEmployee.role}</p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Department</p>
+                <p className="text-sm font-bold text-gray-900">{selectedEmployee.dept}</p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Attendance</p>
+                <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <span className={`w-2.5 h-2.5 rounded-full ${selectedEmployee.attendanceDot}`}></span>
+                  {selectedEmployee.attendance}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Email</p>
+                <p className="text-sm font-bold text-gray-900 break-all">{selectedEmployee.email}</p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Performance Score</p>
+                <div className="flex items-center gap-3">
+                  <div className="flex-1 bg-gray-200 h-2.5 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${selectedEmployee.perfColor}`} style={{ width: `${selectedEmployee.performance}%` }}></div>
+                  </div>
+                  <span className="text-sm font-bold text-gray-900">{selectedEmployee.performance}%</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+              <button 
+                onClick={() => { setIsDetailsModalOpen(false); handleOpenEditModal(selectedEmployee); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+              >
+                <Edit2 size={14} />
+                Edit
+              </button>
+              <button 
+                onClick={() => { handleDeleteEmployee(selectedEmployee.id); setIsDetailsModalOpen(false); }}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <Trash2 size={14} />
+                Delete
+              </button>
+              <button 
+                onClick={() => setIsDetailsModalOpen(false)}
+                className="bg-gray-900 text-white font-medium px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
