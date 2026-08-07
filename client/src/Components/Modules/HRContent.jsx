@@ -24,6 +24,9 @@ import {
   CalendarCheck,
   User,
   Save,
+  Plus,
+  ArrowUpDown,
+  CalendarDays,
 } from 'lucide-react';
 
 const HRContent = () => {
@@ -33,6 +36,8 @@ const HRContent = () => {
   const [attendanceFilter, setAttendanceFilter] = useState('All Attendance');
   const [showDeptDropdown, setShowDeptDropdown] = useState(false);
   const [showAttendanceDropdown, setShowAttendanceDropdown] = useState(false);
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -64,6 +69,7 @@ const HRContent = () => {
       attendanceDot: 'bg-emerald-500',
       performance: 92,
       perfColor: 'bg-emerald-500',
+      joinedDate: '2024-03-15',
     },
     {
       id: 2,
@@ -77,6 +83,7 @@ const HRContent = () => {
       attendanceDot: 'bg-blue-600',
       performance: 88,
       perfColor: 'bg-blue-600',
+      joinedDate: '2023-11-08',
     },
     {
       id: 3,
@@ -90,6 +97,7 @@ const HRContent = () => {
       attendanceDot: 'bg-amber-500',
       performance: 95,
       perfColor: 'bg-indigo-600',
+      joinedDate: '2024-06-01',
     },
     {
       id: 4,
@@ -103,6 +111,7 @@ const HRContent = () => {
       attendanceDot: 'bg-emerald-500',
       performance: 78,
       perfColor: 'bg-emerald-500',
+      joinedDate: '2025-01-20',
     },
   ]);
 
@@ -152,15 +161,30 @@ const HRContent = () => {
     return searchMatch && deptMatch && attendanceMatch;
   });
 
+  // Sort employees by joined date (newest first by default)
+  const sortedEmployees = [...filteredEmployees].sort((a, b) => {
+    const dateA = new Date(a.joinedDate || '2000-01-01');
+    const dateB = new Date(b.joinedDate || '2000-01-01');
+    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+  });
+
+  // Format joined date for display
+  const formatJoinedDate = (dateStr) => {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
   // Export to Excel
   const handleExport = () => {
-    const exportData = filteredEmployees.map((emp) => ({
+    const exportData = sortedEmployees.map((emp) => ({
       'Employee Name': emp.name,
       'Email': emp.email,
       'Department': emp.dept,
       'Role': emp.role,
       'Attendance': emp.attendance,
       'Performance (%)': emp.performance,
+      'Joined Date': formatJoinedDate(emp.joinedDate),
     }));
 
     const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -183,8 +207,23 @@ const HRContent = () => {
     setIsModalOpen(true);
   };
 
+  // Open Create Modal with a specific column field prefilled
+  const handleColumnAdd = (field) => {
+    handleOpenCreateModal();
+    if (field === 'dept') {
+      setFormDept('Engineering');
+    } else if (field === 'attendance') {
+      setFormAttendance('On-site');
+    } else if (field === 'name') {
+      // Just open modal, name field is already empty
+    } else if (field === 'role') {
+      // Just open modal, role field is already empty
+    }
+  };
+
   // Open Edit Modal with prefilled data
-  const handleOpenEditModal = (emp) => {
+  const handleOpenEditModal = (emp, e) => {
+    if (e) e.stopPropagation();
     setIsEditMode(true);
     setEditingEmployeeId(emp.id);
     setFormName(emp.name);
@@ -253,6 +292,7 @@ const HRContent = () => {
         attendanceDot: getAttendanceDot(formAttendance),
         performance: 0,
         perfColor: 'bg-slate-400',
+        joinedDate: new Date().toISOString().split('T')[0],
       };
       setEmployees(prev => [...prev, newEmployee]);
     }
@@ -261,7 +301,8 @@ const HRContent = () => {
   };
 
   // Delete employee
-  const handleDeleteEmployee = (empId) => {
+  const handleDeleteEmployee = (empId, e) => {
+    if (e) e.stopPropagation();
     setEmployees(prev => prev.filter(emp => emp.id !== empId));
   };
 
@@ -319,7 +360,7 @@ const HRContent = () => {
             {/* Department Filter Dropdown */}
             <div className="relative">
               <button 
-                onClick={() => { setShowDeptDropdown(!showDeptDropdown); setShowAttendanceDropdown(false); }}
+                onClick={() => { setShowDeptDropdown(!showDeptDropdown); setShowAttendanceDropdown(false); setShowSortDropdown(false); }}
                 className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
               >
                 <Filter size={14} className="text-gray-400" />
@@ -344,7 +385,7 @@ const HRContent = () => {
             {/* Attendance Filter Dropdown */}
             <div className="relative">
               <button 
-                onClick={() => { setShowAttendanceDropdown(!showAttendanceDropdown); setShowDeptDropdown(false); }}
+                onClick={() => { setShowAttendanceDropdown(!showAttendanceDropdown); setShowDeptDropdown(false); setShowSortDropdown(false); }}
                 className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
               >
                 <CalendarCheck size={14} className="text-gray-400" />
@@ -386,9 +427,9 @@ const HRContent = () => {
           </div>
         </div>
 
-        {/* Search Bar */}
-        <div className="px-6 py-3 bg-gray-50/50 border-b border-gray-100">
-          <div className="relative max-w-md">
+        {/* Search Bar & Sort */}
+        <div className="px-6 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-3">
+          <div className="relative max-w-md flex-1 min-w-[250px]">
             <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
@@ -397,6 +438,38 @@ const HRContent = () => {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full bg-white border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
             />
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => { setShowSortDropdown(!showSortDropdown); setShowDeptDropdown(false); setShowAttendanceDropdown(false); }}
+              className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+            >
+              <ArrowUpDown size={14} className="text-gray-400" />
+              <span>{sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}</span>
+              <ChevronDown size={14} className="text-gray-400" />
+            </button>
+            {showSortDropdown && (
+              <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1">
+                <button
+                  onClick={() => { setSortOrder('newest'); setShowSortDropdown(false); }}
+                  className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 ${sortOrder === 'newest' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                >
+                  <CalendarDays size={13} />
+                  Newest First
+                  {sortOrder === 'newest' && <span className="ml-auto text-blue-600">✓</span>}
+                </button>
+                <button
+                  onClick={() => { setSortOrder('oldest'); setShowSortDropdown(false); }}
+                  className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 ${sortOrder === 'oldest' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                >
+                  <CalendarDays size={13} />
+                  Oldest First
+                  {sortOrder === 'oldest' && <span className="ml-auto text-blue-600">✓</span>}
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -420,7 +493,7 @@ const HRContent = () => {
           </div>
 
           <div className="flex items-center space-x-3">
-            <span>Showing {filteredEmployees.length} of {employees.length}</span>
+            <span>Showing {sortedEmployees.length} of {employees.length}</span>
             <div className="flex items-center space-x-1">
               <button className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"><ChevronLeft size={16} /></button>
               <button className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"><ChevronRight size={16} /></button>
@@ -434,18 +507,79 @@ const HRContent = () => {
             <thead>
               <tr className="border-b border-gray-100 text-[11px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50/30">
                 <th className="py-3 px-6 w-12"></th>
-                <th className="py-3 px-4">Employee Name</th>
-                <th className="py-3 px-4">Department</th>
-                <th className="py-3 px-4">Role</th>
-                <th className="py-3 px-4">Attendance</th>
+                <th className="py-3 px-4">
+                  <div className="flex items-center gap-1.5">
+                    Employee Name
+                    <button 
+                      onClick={() => handleColumnAdd('name')}
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Add employee"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </th>
+                <th className="py-3 px-4">
+                  <div className="flex items-center gap-1.5">
+                    Department
+                    <button 
+                      onClick={() => handleColumnAdd('dept')}
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Add employee to department"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </th>
+                <th className="py-3 px-4">
+                  <div className="flex items-center gap-1.5">
+                    Role
+                    <button 
+                      onClick={() => handleColumnAdd('role')}
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Add employee with role"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </th>
+                <th className="py-3 px-4">
+                  <div className="flex items-center gap-1.5">
+                    Attendance
+                    <button 
+                      onClick={() => handleColumnAdd('attendance')}
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Add employee with attendance"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </th>
+                <th className="py-3 px-4">
+                  <div className="flex items-center gap-1.5">
+                    Joined
+                    <button 
+                      onClick={() => handleColumnAdd('joined')}
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      title="Add employee"
+                    >
+                      <Plus size={12} />
+                    </button>
+                  </div>
+                </th>
                 <th className="py-3 px-4">Performance</th>
                 <th className="py-3 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-xs font-medium text-gray-700">
-              {filteredEmployees.map((emp) => (
-                <tr key={emp.id} className="hover:bg-blue-50/30 transition-colors group">
-                  <td className="py-4 px-6">
+              {sortedEmployees.map((emp) => (
+                <tr 
+                  key={emp.id} 
+                  className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
+                  onClick={() => handleOpenDetailsModal(emp)}
+                  title="Click to view details"
+                >
+                  <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedAll}
@@ -475,6 +609,12 @@ const HRContent = () => {
                     </span>
                   </td>
                   <td className="py-4 px-4">
+                    <span className="flex items-center gap-1.5 text-gray-500">
+                      <CalendarDays size={12} className="text-gray-400" />
+                      {formatJoinedDate(emp.joinedDate)}
+                    </span>
+                  </td>
+                  <td className="py-4 px-4">
                     <div className="flex items-center space-x-3 w-36">
                       <div className="flex-1 bg-gray-100 h-2 rounded-full overflow-hidden">
                         <div className={`h-full rounded-full ${emp.perfColor}`} style={{ width: `${emp.performance}%` }}></div>
@@ -485,21 +625,21 @@ const HRContent = () => {
                   <td className="py-4 px-6 text-right">
                     <div className="flex items-center justify-end space-x-2 text-gray-400">
                       <button 
-                        onClick={() => handleOpenEditModal(emp)}
+                        onClick={(e) => handleOpenEditModal(emp, e)}
                         className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="Edit Employee"
                       >
                         <Edit2 size={15} />
                       </button>
                       <button 
-                        onClick={() => handleOpenDetailsModal(emp)}
+                        onClick={(e) => { e.stopPropagation(); handleOpenDetailsModal(emp); }}
                         className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                         title="View Details"
                       >
                         <Eye size={15} />
                       </button>
                       <button 
-                        onClick={() => handleDeleteEmployee(emp.id)}
+                        onClick={(e) => handleDeleteEmployee(emp.id, e)}
                         className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         title="Delete Employee"
                       >
@@ -509,9 +649,9 @@ const HRContent = () => {
                   </td>
                 </tr>
               ))}
-              {filteredEmployees.length === 0 && (
+              {sortedEmployees.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="py-12 text-center">
+                  <td colSpan={8} className="py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <Search size={24} className="text-gray-300" />
                       <p className="text-sm font-semibold text-gray-500">No employees found</p>
@@ -861,6 +1001,14 @@ const HRContent = () => {
               </div>
 
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Joined Date</p>
+                <p className="text-sm font-bold text-gray-900 flex items-center gap-2">
+                  <CalendarDays size={14} className="text-gray-400" />
+                  {formatJoinedDate(selectedEmployee.joinedDate)}
+                </p>
+              </div>
+
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 sm:col-span-2">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Performance Score</p>
                 <div className="flex items-center gap-3">
                   <div className="flex-1 bg-gray-200 h-2.5 rounded-full overflow-hidden">
