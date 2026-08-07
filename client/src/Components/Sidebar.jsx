@@ -75,7 +75,14 @@ export default function Sidebar({ activeTab, setActiveTab }) {
         <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:text-slate-900 font-medium rounded-lg hover:bg-slate-50">
           <User className="w-4 h-4" /> Profile
         </button>
-        <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:text-slate-900 font-medium rounded-lg hover:bg-slate-50">
+        <button
+          onClick={() => setActiveTab('help')}
+          className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === 'help'
+              ? 'text-blue-600 bg-blue-50 font-semibold'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+          }`}
+        >
           <HelpCircle className="w-4 h-4" /> Help
         </button>
         <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:text-slate-900 font-medium rounded-lg hover:bg-slate-50">

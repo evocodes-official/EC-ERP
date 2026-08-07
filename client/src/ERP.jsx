@@ -10,6 +10,7 @@ import FinanceContent from './Components/modules/FinanceContent';
 import ProjectsContent from './Components/modules/ProjectContent';
 import ReportsContent from './Components/ReportsContent';
 import SettingsContent from './Components/SettingsContent';
+import HelpContent from './Components/HelpContent';
 
 export default function ERP() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -30,6 +31,8 @@ export default function ERP() {
         return <ReportsContent />;
       case 'settings':
         return <SettingsContent />;
+      case 'help':
+        return <HelpContent />;
       default:
         return <DashboardContent />;
     }
@@ -39,7 +42,7 @@ export default function ERP() {
     <div className="flex bg-slate-50 min-h-screen font-sans antialiased text-gray-900">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="flex-1 flex flex-col min-w-0">
-        <Navbar />
+        <Navbar setActiveTab={setActiveTab} />
         <main className="p-6 overflow-y-auto flex-1">
           {renderActiveComponent()}
         </main>
