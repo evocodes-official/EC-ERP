@@ -1,7 +1,6 @@
 import React from 'react';
 import {
   Grid,
-  Plus,
   LayoutDashboard,
   Users,
   Briefcase,
@@ -30,8 +29,39 @@ export default function Sidebar({ activeTab, setActiveTab, setIsSidebarOpen }) {
   ];
 
   return (
-    // Replaced sticky top-0 h-screen with h-full so the wrapper controls it
     <aside className="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 h-full overflow-y-auto">
+      {/* 
+        Injecting custom CSS to guarantee the seamless fluid border and shine 
+        work out-of-the-box without modifying tailwind.config.js 
+      */}
+      <style>
+        {`
+          @keyframes fluidBorder {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+          }
+          @keyframes glassShine {
+            0% { transform: translateX(-150%) skewX(-20deg); }
+            25% { transform: translateX(250%) skewX(-20deg); }
+            100% { transform: translateX(250%) skewX(-20deg); }
+          }
+          .premium-fluid-border {
+            background: linear-gradient(90deg, #4285f4, #9b72cb, #d96570, #fbbc04, #34a853, #4285f4, #9b72cb);
+            background-size: 200% 100%;
+            animation: fluidBorder 3s linear infinite;
+          }
+          .premium-shine-beam {
+            position: absolute;
+            top: 0;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.8), rgba(255,255,255,0));
+            animation: glassShine 4s infinite ease-in-out;
+            pointer-events: none;
+          }
+        `}
+      </style>
+
       <div>
         {/* Logo Section */}
         <div className="p-5 flex items-center justify-between">
@@ -56,16 +86,8 @@ export default function Sidebar({ activeTab, setActiveTab, setIsSidebarOpen }) {
           )}
         </div>
 
-        {/* New Entry Button */}
-        <div className="px-3 mb-3">
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 rounded-xl flex items-center justify-center gap-2 shadow-md shadow-blue-600/20 transition-all text-sm">
-            <Plus className="w-4 h-4" />
-            New Entry
-          </button>
-        </div>
-
-        {/* Navigation Links */}
-        <nav className="px-3 space-y-1">
+        {/* Navigation Links (New Entry removed) */}
+        <nav className="px-3 space-y-1 mt-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -92,13 +114,23 @@ export default function Sidebar({ activeTab, setActiveTab, setIsSidebarOpen }) {
         <div className="px-4 py-4 mt-2">
           <button
             onClick={() => setActiveTab('premium')}
-            className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl font-bold text-sm transition-all shadow-md ${
-              activeTab === 'premium'
-                ? 'bg-amber-100 text-amber-800 shadow-amber-200/50 ring-2 ring-amber-400'
-                : 'bg-gradient-to-r from-amber-400 to-orange-500 text-white hover:from-amber-500 hover:to-orange-600 shadow-orange-500/30'
-            }`}
+            className="relative w-full rounded-xl p-[2px] shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 premium-fluid-border group"
           >
-            <Crown className="w-4 h-4" /> Go Premium
+            {/* Inner Glass Center */}
+            <div className={`relative w-full h-full rounded-[10px] flex items-center justify-center gap-2 px-3 py-2 overflow-hidden backdrop-blur-md transition-all duration-300 shadow-[inset_0_1px_3px_rgba(255,255,255,0.8)] ${
+              activeTab === 'premium'
+                ? 'bg-white/50'
+                : 'bg-white/80 group-hover:bg-white/60'
+            }`}>
+              
+              {/* Sweeping Shine Animation inside the glass */}
+              <div className="premium-shine-beam z-0" />
+
+              <Crown className="w-4 h-4 relative z-10 text-black" />
+              <span className="font-bold text-xs uppercase tracking-wide relative z-10 bg-clip-text text-black bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 drop-shadow-sm">
+                Go Premium
+              </span>
+            </div>
           </button>
         </div>
 
