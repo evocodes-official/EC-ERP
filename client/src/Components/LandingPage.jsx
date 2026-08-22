@@ -15,7 +15,12 @@ import {
   Sparkles,
   Menu,
   X,
-  ChevronRight
+  ChevronRight,
+  Mail,
+  Phone,
+  MapPin,
+  Send,
+  Clock
 } from 'lucide-react';
 import AuthModal from './AuthModal';
 
@@ -23,6 +28,15 @@ const LandingPage = ({ onLogin, onNavigate }) => {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    company: '',
+    subject: '',
+    message: ''
+  });
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   const openAuth = (mode) => {
     setAuthMode(mode);
@@ -33,6 +47,28 @@ const LandingPage = ({ onLogin, onNavigate }) => {
   const handleLogin = () => {
     setIsAuthOpen(false);
     onLogin();
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setIsSubmitted(true);
+    // Reset form after showing success message
+    setTimeout(() => {
+      setFormData({
+        name: '',
+        email: '',
+        phone: '',
+        company: '',
+        subject: '',
+        message: ''
+      });
+      setIsSubmitted(false);
+    }, 4000);
   };
 
   const features = [
@@ -166,6 +202,33 @@ const LandingPage = ({ onLogin, onNavigate }) => {
       quote: 'Setup was effortless and the interface is beautiful. Our team adopted it within days, not weeks.',
       initials: 'SM',
       color: 'bg-purple-600'
+    }
+  ];
+
+  const contactInfo = [
+    {
+      icon: Mail,
+      title: 'Email Us',
+      value: 'support@evocodes.com',
+      sub: 'We reply within 24 hours'
+    },
+    {
+      icon: Phone,
+      title: 'Call Us',
+      value: '+91 98765 43210',
+      sub: 'Mon-Fri, 9am to 6pm IST'
+    },
+    {
+      icon: MapPin,
+      title: 'Visit Us',
+      value: 'Chennai, Tamil Nadu, India',
+      sub: 'EvoCodes Headquarters'
+    },
+    {
+      icon: Clock,
+      title: 'Support Hours',
+      value: '24/7 Support',
+      sub: 'Enterprise customers'
     }
   ];
 
@@ -594,8 +657,185 @@ const LandingPage = ({ onLogin, onNavigate }) => {
         </div>
       </section>
 
+      {/* CONTACT SECTION */}
+      <section id="contact" className="py-20 px-4 sm:px-6 lg:px-8 bg-gray-50">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+              Get in Touch
+            </h2>
+            <p className="mt-4 text-lg text-gray-600">
+              Have questions about EVO ERP? Send us an enquiry and our team will get back to you.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Contact Info Cards */}
+            <div className="space-y-4">
+              {contactInfo.map((info, i) => {
+                const Icon = info.icon;
+                return (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-200 p-6 flex items-start gap-4 hover:shadow-lg hover:shadow-blue-500/5 transition-all duration-300">
+                    <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center shrink-0">
+                      <Icon size={22} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-gray-900">{info.title}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{info.value}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{info.sub}</p>
+                    </div>
+                  </div>
+                );
+              })}
+
+              {/* Social/Additional Info */}
+              <div className="bg-gradient-to-r from-blue-600 to-cyan-500 rounded-2xl p-6 text-white">
+                <h3 className="font-bold text-lg mb-2">Prefer a Demo?</h3>
+                <p className="text-sm text-blue-100 mb-4">
+                  Book a free personalized demo with our team and see how EVO ERP can transform your business.
+                </p>
+                <button
+                  onClick={() => openAuth('signup')}
+                  className="inline-flex items-center gap-2 bg-white text-blue-700 font-semibold px-5 py-2.5 rounded-xl text-sm transition-all hover:bg-blue-50 shadow-lg"
+                >
+                  Book a Demo
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </div>
+
+            {/* Enquiry Form */}
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+              <div className="p-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-1">Send an Enquiry</h3>
+                <p className="text-sm text-gray-500 mb-6">
+                  Fill out the form below and we'll get back to you within 24 hours.
+                </p>
+
+                {isSubmitted ? (
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-6 text-center">
+                    <div className="w-14 h-14 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Check size={28} className="text-emerald-600" />
+                    </div>
+                    <h4 className="font-bold text-emerald-800 text-lg mb-1">Enquiry Sent!</h4>
+                    <p className="text-sm text-emerald-600">
+                      Thank you for reaching out. Our team will contact you shortly.
+                    </p>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Full Name *
+                        </label>
+                        <input
+                          type="text"
+                          name="name"
+                          value={formData.name}
+                          onChange={handleInputChange}
+                          required
+                          placeholder="Enter your name"
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Email Address *
+                        </label>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                          required
+                          placeholder="you@company.com"
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Phone Number
+                        </label>
+                        <input
+                          type="tel"
+                          name="phone"
+                          value={formData.phone}
+                          onChange={handleInputChange}
+                          placeholder="+91 98765 43210"
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                          Company Name
+                        </label>
+                        <input
+                          type="text"
+                          name="company"
+                          value={formData.company}
+                          onChange={handleInputChange}
+                          placeholder="Your company"
+                          className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Subject *
+                      </label>
+                      <select
+                        name="subject"
+                        value={formData.subject}
+                        onChange={handleInputChange}
+                        required
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm bg-white"
+                      >
+                        <option value="">Select a subject</option>
+                        <option value="demo">Request a Demo</option>
+                        <option value="pricing">Pricing Inquiry</option>
+                        <option value="support">Technical Support</option>
+                        <option value="partnership">Partnership</option>
+                        <option value="other">Other</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                        Message *
+                      </label>
+                      <textarea
+                        name="message"
+                        value={formData.message}
+                        onChange={handleInputChange}
+                        required
+                        rows="4"
+                        placeholder="Tell us about your requirements..."
+                        className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all text-sm resize-none"
+                      ></textarea>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5"
+                    >
+                      <Send size={16} />
+                      Send Enquiry
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FOOTER */}
-      <footer id="contact" className="bg-gray-900 text-gray-400 py-16 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-gray-900 text-gray-400 py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
             {/* Brand */}
@@ -632,7 +872,7 @@ const LandingPage = ({ onLogin, onNavigate }) => {
                 <li><a href="#" className="hover:text-blue-400 transition-colors">About Us</a></li>
                 <li><a href="#" className="hover:text-blue-400 transition-colors">Careers</a></li>
                 <li><a href="#" className="hover:text-blue-400 transition-colors">Blog</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Contact</a></li>
+                <li><a href="#contact" className="hover:text-blue-400 transition-colors">Contact</a></li>
               </ul>
             </div>
 
