@@ -30,7 +30,6 @@ import {
 } from 'lucide-react';
 
 const HRContent = () => {
-  const [selectedAll, setSelectedAll] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [deptFilter, setDeptFilter] = useState('All Departments');
   const [attendanceFilter, setAttendanceFilter] = useState('All Attendance');
@@ -38,6 +37,13 @@ const HRContent = () => {
   const [showAttendanceDropdown, setShowAttendanceDropdown] = useState(false);
   const [sortOrder, setSortOrder] = useState('newest');
   const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  // Selection States
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -145,28 +151,56 @@ const HRContent = () => {
 
   // Filtered employees based on search + filters
   const filteredEmployees = employees.filter((emp) => {
-    // Search filter (name, email, dept, role)
     const searchMatch = 
       emp.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.dept.toLowerCase().includes(searchQuery.toLowerCase()) ||
       emp.role.toLowerCase().includes(searchQuery.toLowerCase());
 
-    // Department filter
     const deptMatch = deptFilter === 'All Departments' || emp.dept === deptFilter;
-
-    // Attendance filter
     const attendanceMatch = attendanceFilter === 'All Attendance' || emp.attendance === attendanceFilter;
 
     return searchMatch && deptMatch && attendanceMatch;
   });
 
-  // Sort employees by joined date (newest first by default)
+  // Sort employees by joined date
   const sortedEmployees = [...filteredEmployees].sort((a, b) => {
     const dateA = new Date(a.joinedDate || '2000-01-01');
     const dateB = new Date(b.joinedDate || '2000-01-01');
     return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
   });
+
+  // Pagination Calculations
+  const totalPages = Math.ceil(sortedEmployees.length / itemsPerPage) || 1;
+  const paginatedEmployees = sortedEmployees.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Bulk Selection Handlers
+  const isAllSelected = paginatedEmployees.length > 0 && paginatedEmployees.every(emp => selectedEmployeeIds.includes(emp.id));
+
+  const handleSelectAllToggle = (e) => {
+    if (e.target.checked) {
+      const pageIds = paginatedEmployees.map(emp => emp.id);
+      setSelectedEmployeeIds(prev => [...new Set([...prev, ...pageIds])]);
+    } else {
+      const pageIds = paginatedEmployees.map(emp => emp.id);
+      setSelectedEmployeeIds(prev => prev.filter(id => !pageIds.includes(id)));
+    }
+  };
+
+  const handleRowSelect = (empId, e) => {
+    e.stopPropagation();
+    setSelectedEmployeeIds(prev =>
+      prev.includes(empId) ? prev.filter(id => id !== empId) : [...prev, empId]
+    );
+  };
+
+  const handleBulkDelete = () => {
+    setEmployees(prev => prev.filter(emp => !selectedEmployeeIds.includes(emp.id)));
+    setSelectedEmployeeIds([]);
+  };
 
   // Format joined date for display
   const formatJoinedDate = (dateStr) => {
@@ -207,17 +241,12 @@ const HRContent = () => {
     setIsModalOpen(true);
   };
 
-  // Open Create Modal with a specific column field prefilled
   const handleColumnAdd = (field) => {
     handleOpenCreateModal();
     if (field === 'dept') {
       setFormDept('Engineering');
     } else if (field === 'attendance') {
       setFormAttendance('On-site');
-    } else if (field === 'name') {
-      // Just open modal, name field is already empty
-    } else if (field === 'role') {
-      // Just open modal, role field is already empty
     }
   };
 
@@ -261,7 +290,6 @@ const HRContent = () => {
     if (!formName.trim() || !formEmail.trim() || !formRole.trim()) return;
 
     if (isEditMode && editingEmployeeId) {
-      // Edit existing employee
       setEmployees(prev => prev.map(emp => {
         if (emp.id === editingEmployeeId) {
           return {
@@ -279,7 +307,6 @@ const HRContent = () => {
         return emp;
       }));
     } else {
-      // Create new employee
       const newEmployee = {
         id: employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1,
         name: formName,
@@ -290,8 +317,8 @@ const HRContent = () => {
         role: formRole,
         attendance: formAttendance,
         attendanceDot: getAttendanceDot(formAttendance),
-        performance: 0,
-        perfColor: 'bg-slate-400',
+        performance: 85,
+        perfColor: 'bg-emerald-500',
         joinedDate: new Date().toISOString().split('T')[0],
       };
       setEmployees(prev => [...prev, newEmployee]);
@@ -304,44 +331,41 @@ const HRContent = () => {
   const handleDeleteEmployee = (empId, e) => {
     if (e) e.stopPropagation();
     setEmployees(prev => prev.filter(emp => emp.id !== empId));
+    setSelectedEmployeeIds(prev => prev.filter(id => id !== empId));
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full px-4 sm:px-6 py-6">
       {/* 1. TOP STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Headcount */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Total Headcount</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Total Headcount</p>
           <h3 className="text-3xl font-extrabold text-gray-900 mt-2">{employees.length}</h3>
-          <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
+          <p className="text-xs font-semibold text-emerald-600 mt-2.5 flex items-center gap-1">
             <span>📈</span> +{employees.length} this month
           </p>
         </div>
 
-        {/* Attendance Rate */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Attendance Rate</p>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Attendance Rate</p>
           <h3 className="text-3xl font-extrabold text-gray-900 mt-2">96.8%</h3>
-          <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
+          <p className="text-xs font-semibold text-emerald-600 mt-2.5 flex items-center gap-1">
             <CheckCircle2 size={14} className="text-emerald-500" /> Above target (95%)
           </p>
         </div>
 
-        {/* Open Positions */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Open Positions</p>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Open Positions</p>
           <h3 className="text-3xl font-extrabold text-gray-900 mt-2">24</h3>
-          <p className="text-xs font-semibold text-amber-600 mt-2 flex items-center gap-1">
+          <p className="text-xs font-semibold text-amber-600 mt-2.5 flex items-center gap-1">
             <Clock size={14} className="text-amber-500" /> 8 in final interview
           </p>
         </div>
 
-        {/* Retention Score */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Retention Score</p>
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-gray-400">Retention Score</p>
           <h3 className="text-3xl font-extrabold text-gray-900 mt-2">92/100</h3>
-          <p className="text-xs font-semibold text-blue-600 mt-2 flex items-center gap-1">
+          <p className="text-xs font-semibold text-blue-600 mt-2.5 flex items-center gap-1">
             <Star size={14} className="text-blue-500" /> Top decile performance
           </p>
         </div>
@@ -356,12 +380,12 @@ const HRContent = () => {
             <p className="text-xs text-gray-500 mt-0.5">Manage, filter, and review all personnel across departments.</p>
           </div>
 
-          <div className="flex items-center space-x-3">
+          <div className="flex flex-wrap items-center gap-3">
             {/* Department Filter Dropdown */}
             <div className="relative">
               <button 
                 onClick={() => { setShowDeptDropdown(!showDeptDropdown); setShowAttendanceDropdown(false); setShowSortDropdown(false); }}
-                className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+                className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm cursor-pointer"
               >
                 <Filter size={14} className="text-gray-400" />
                 <span>{deptFilter}</span>
@@ -372,8 +396,8 @@ const HRContent = () => {
                   {departments.map((dept) => (
                     <button
                       key={dept}
-                      onClick={() => { setDeptFilter(dept); setShowDeptDropdown(false); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors ${deptFilter === dept ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                      onClick={() => { setDeptFilter(dept); setCurrentPage(1); setShowDeptDropdown(false); }}
+                      className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors cursor-pointer ${deptFilter === dept ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
                     >
                       {dept}
                     </button>
@@ -386,7 +410,7 @@ const HRContent = () => {
             <div className="relative">
               <button 
                 onClick={() => { setShowAttendanceDropdown(!showAttendanceDropdown); setShowDeptDropdown(false); setShowSortDropdown(false); }}
-                className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+                className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm cursor-pointer"
               >
                 <CalendarCheck size={14} className="text-gray-400" />
                 <span>{attendanceFilter}</span>
@@ -397,8 +421,8 @@ const HRContent = () => {
                   {attendanceOptions.map((att) => (
                     <button
                       key={att}
-                      onClick={() => { setAttendanceFilter(att); setShowAttendanceDropdown(false); }}
-                      className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors ${attendanceFilter === att ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                      onClick={() => { setAttendanceFilter(att); setCurrentPage(1); setShowAttendanceDropdown(false); }}
+                      className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors cursor-pointer ${attendanceFilter === att ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
                     >
                       {att}
                     </button>
@@ -410,7 +434,7 @@ const HRContent = () => {
             {/* Export Button */}
             <button 
               onClick={handleExport}
-              className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+              className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm cursor-pointer"
             >
               <Download size={14} className="text-gray-500" />
               <span>Export</span>
@@ -419,7 +443,7 @@ const HRContent = () => {
             {/* Add Employee Button */}
             <button 
               onClick={handleOpenCreateModal}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors"
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer"
             >
               <UserPlus size={15} />
               <span>Add Employee</span>
@@ -428,15 +452,15 @@ const HRContent = () => {
         </div>
 
         {/* Search Bar & Sort */}
-        <div className="px-6 py-3 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center gap-3">
+        <div className="px-6 py-3.5 bg-gray-50/50 border-b border-gray-100 flex flex-wrap items-center justify-between gap-3">
           <div className="relative max-w-md flex-1 min-w-[250px]">
-            <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name, email, department, or role..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-white border border-gray-200 pl-9 pr-4 py-2 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
+              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-white border border-gray-200 pl-10 pr-4 py-2 rounded-xl text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-sm"
             />
           </div>
 
@@ -444,17 +468,17 @@ const HRContent = () => {
           <div className="relative">
             <button 
               onClick={() => { setShowSortDropdown(!showSortDropdown); setShowDeptDropdown(false); setShowAttendanceDropdown(false); }}
-              className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm"
+              className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm cursor-pointer"
             >
               <ArrowUpDown size={14} className="text-gray-400" />
               <span>{sortOrder === 'newest' ? 'Newest First' : 'Oldest First'}</span>
               <ChevronDown size={14} className="text-gray-400" />
             </button>
             {showSortDropdown && (
-              <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1">
+              <div className="absolute right-0 sm:left-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-20 py-1">
                 <button
                   onClick={() => { setSortOrder('newest'); setShowSortDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 ${sortOrder === 'newest' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                  className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer ${sortOrder === 'newest' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
                 >
                   <CalendarDays size={13} />
                   Newest First
@@ -462,7 +486,7 @@ const HRContent = () => {
                 </button>
                 <button
                   onClick={() => { setSortOrder('oldest'); setShowSortDropdown(false); }}
-                  className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 ${sortOrder === 'oldest' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
+                  className={`w-full text-left px-4 py-2 text-xs font-medium hover:bg-gray-50 transition-colors flex items-center gap-2 cursor-pointer ${sortOrder === 'oldest' ? 'text-blue-600 font-bold' : 'text-gray-700'}`}
                 >
                   <CalendarDays size={13} />
                   Oldest First
@@ -479,100 +503,78 @@ const HRContent = () => {
             <label className="flex items-center space-x-2 cursor-pointer select-none">
               <input
                 type="checkbox"
-                checked={selectedAll}
-                onChange={(e) => setSelectedAll(e.target.checked)}
-                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 border-gray-300"
+                checked={isAllSelected}
+                onChange={handleSelectAllToggle}
+                className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 border-gray-300 cursor-pointer"
               />
               <span className="font-semibold text-gray-700">Select All</span>
             </label>
 
-            <button className="flex items-center space-x-1.5 text-gray-500 hover:text-red-600 transition-colors">
+            <button 
+              onClick={handleBulkDelete}
+              disabled={selectedEmployeeIds.length === 0}
+              className={`flex items-center space-x-1.5 transition-colors ${selectedEmployeeIds.length > 0 ? 'text-red-600 hover:text-red-700 cursor-pointer' : 'text-gray-300 cursor-not-allowed'}`}
+            >
               <Trash2 size={14} />
-              <span>Bulk Delete</span>
+              <span>Bulk Delete ({selectedEmployeeIds.length})</span>
             </button>
           </div>
 
           <div className="flex items-center space-x-3">
-            <span>Showing {sortedEmployees.length} of {employees.length}</span>
-            <div className="flex items-center space-x-1">
-              <button className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"><ChevronLeft size={16} /></button>
-              <button className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"><ChevronRight size={16} /></button>
-            </div>
+            <span>Showing {paginatedEmployees.length} of {sortedEmployees.length} entries</span>
           </div>
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
               <tr className="border-b border-gray-100 text-[11px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50/30">
                 <th className="py-3 px-6 w-12"></th>
-                <th className="py-3 px-4">
+                <th className="py-3.5 px-4">
                   <div className="flex items-center gap-1.5">
                     Employee Name
                     <button 
                       onClick={() => handleColumnAdd('name')}
-                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                       title="Add employee"
                     >
                       <Plus size={12} />
                     </button>
                   </div>
                 </th>
-                <th className="py-3 px-4">
+                <th className="py-3.5 px-4">
                   <div className="flex items-center gap-1.5">
                     Department
                     <button 
                       onClick={() => handleColumnAdd('dept')}
-                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                       title="Add employee to department"
                     >
                       <Plus size={12} />
                     </button>
                   </div>
                 </th>
-                <th className="py-3 px-4">
-                  <div className="flex items-center gap-1.5">
-                    Role
-                    <button 
-                      onClick={() => handleColumnAdd('role')}
-                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="Add employee with role"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
-                </th>
-                <th className="py-3 px-4">
+                <th className="py-3.5 px-4">Role</th>
+                <th className="py-3.5 px-4">
                   <div className="flex items-center gap-1.5">
                     Attendance
                     <button 
                       onClick={() => handleColumnAdd('attendance')}
-                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors cursor-pointer"
                       title="Add employee with attendance"
                     >
                       <Plus size={12} />
                     </button>
                   </div>
                 </th>
-                <th className="py-3 px-4">
-                  <div className="flex items-center gap-1.5">
-                    Joined
-                    <button 
-                      onClick={() => handleColumnAdd('joined')}
-                      className="p-0.5 text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                      title="Add employee"
-                    >
-                      <Plus size={12} />
-                    </button>
-                  </div>
-                </th>
-                <th className="py-3 px-4">Performance</th>
-                <th className="py-3 px-6 text-right">Actions</th>
+                <th className="py-3.5 px-4">Joined</th>
+                <th className="py-3.5 px-4">Performance</th>
+                <th className="py-3.5 px-6 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 text-xs font-medium text-gray-700">
-              {sortedEmployees.map((emp) => (
+              {paginatedEmployees.map((emp) => (
                 <tr 
                   key={emp.id} 
                   className="hover:bg-blue-50/30 transition-colors group cursor-pointer"
@@ -582,9 +584,9 @@ const HRContent = () => {
                   <td className="py-4 px-6" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
-                      checked={selectedAll}
-                      onChange={() => {}}
-                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 border-gray-300"
+                      checked={selectedEmployeeIds.includes(emp.id)}
+                      onChange={(e) => handleRowSelect(emp.id, e)}
+                      className="rounded text-blue-600 focus:ring-blue-500 w-4 h-4 border-gray-300 cursor-pointer"
                     />
                   </td>
                   <td className="py-4 px-4">
@@ -622,25 +624,25 @@ const HRContent = () => {
                       <span className="font-bold text-gray-800 text-xs">{emp.performance}%</span>
                     </div>
                   </td>
-                  <td className="py-4 px-6 text-right">
+                  <td className="py-4 px-6 text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end space-x-2 text-gray-400">
                       <button 
                         onClick={(e) => handleOpenEditModal(emp, e)}
-                        className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                         title="Edit Employee"
                       >
                         <Edit2 size={15} />
                       </button>
                       <button 
-                        onClick={(e) => { e.stopPropagation(); handleOpenDetailsModal(emp); }}
-                        className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        onClick={() => handleOpenDetailsModal(emp)}
+                        className="p-1.5 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                         title="View Details"
                       >
                         <Eye size={15} />
                       </button>
                       <button 
                         onClick={(e) => handleDeleteEmployee(emp.id, e)}
-                        className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                         title="Delete Employee"
                       >
                         <Trash2 size={15} />
@@ -649,7 +651,7 @@ const HRContent = () => {
                   </td>
                 </tr>
               ))}
-              {sortedEmployees.length === 0 && (
+              {paginatedEmployees.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-12 text-center">
                     <div className="flex flex-col items-center gap-2">
@@ -666,26 +668,44 @@ const HRContent = () => {
 
         {/* Pagination Footer */}
         <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs">
-          <span className="text-gray-500 font-medium">Page 1 of 1</span>
+          <span className="text-gray-500 font-medium">Page {currentPage} of {totalPages}</span>
           <div className="flex items-center space-x-1">
-            <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium">Previous</button>
-            <button className="px-3 py-1.5 bg-blue-600 text-white font-bold rounded-lg">1</button>
-            <button className="px-3 py-1.5 border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 font-medium">Next</button>
+            <button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className={`px-3 py-1.5 border border-gray-200 rounded-lg font-medium cursor-pointer ${currentPage === 1 ? 'opacity-50 cursor-not-allowed text-gray-300' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              Previous
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`px-3 py-1.5 font-bold rounded-lg cursor-pointer ${currentPage === page ? 'bg-blue-600 text-white' : 'border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1.5 border border-gray-200 rounded-lg font-medium cursor-pointer ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed text-gray-300' : 'text-gray-600 hover:bg-gray-50'}`}
+            >
+              Next
+            </button>
           </div>
         </div>
       </div>
 
       {/* 3. BOTTOM ROW: RECENT ACTIVITY & STAFF DISTRIBUTION */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Recent HR Activity */}
         <div className="lg:col-span-2 bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
           <div className="flex justify-between items-center mb-6">
             <h3 className="font-bold text-gray-900 text-base">Recent HR Activity</h3>
-            <button className="text-xs font-semibold text-blue-600 hover:underline">View All Logs</button>
+            <button className="text-xs font-semibold text-blue-600 hover:underline cursor-pointer">View All Logs</button>
           </div>
 
           <div className="space-y-6 relative before:absolute before:inset-0 before:left-3.5 before:w-0.5 before:bg-gray-100">
-            {/* Log item 1 */}
             <div className="relative flex items-start space-x-4">
               <div className="p-1.5 bg-blue-100 text-blue-600 rounded-full z-10">
                 <UserPlus size={14} />
@@ -697,7 +717,6 @@ const HRContent = () => {
               </div>
             </div>
 
-            {/* Log item 2 */}
             <div className="relative flex items-start space-x-4">
               <div className="p-1.5 bg-cyan-100 text-cyan-600 rounded-full z-10">
                 <UserCheck size={14} />
@@ -709,7 +728,6 @@ const HRContent = () => {
               </div>
             </div>
 
-            {/* Log item 3 */}
             <div className="relative flex items-start space-x-4">
               <div className="p-1.5 bg-purple-100 text-purple-600 rounded-full z-10">
                 <Plane size={14} />
@@ -723,7 +741,6 @@ const HRContent = () => {
           </div>
         </div>
 
-        {/* Staff Distribution & AI Insight */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
           <div>
             <h3 className="font-bold text-gray-900 text-base mb-4">Staff Distribution</h3>
@@ -770,7 +787,6 @@ const HRContent = () => {
             </div>
           </div>
 
-          {/* Predictive Insight Box */}
           <div className="mt-6 p-4 bg-slate-50 border border-slate-100 rounded-xl">
             <p className="text-xs font-bold text-gray-900 flex items-center gap-1.5">
               <span>Predictive Insight</span>
@@ -784,11 +800,11 @@ const HRContent = () => {
 
       {/* CREATE / EDIT EMPLOYEE MODAL */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 my-auto">
             <button 
               onClick={() => setIsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 cursor-pointer"
             >
               <X size={20} />
             </button>
@@ -801,7 +817,6 @@ const HRContent = () => {
             </p>
 
             <form onSubmit={handleSaveEmployee} className="space-y-4">
-              {/* Profile Picture Upload */}
               <div className="flex flex-col items-center mb-4">
                 <div className="relative">
                   <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-blue-100 bg-gray-100 flex items-center justify-center">
@@ -814,7 +829,7 @@ const HRContent = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 transition-colors"
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 transition-colors cursor-pointer"
                     title="Upload Profile Picture"
                   >
                     <Camera size={14} />
@@ -830,7 +845,6 @@ const HRContent = () => {
                 <p className="text-[11px] text-gray-400 mt-2 font-medium">Click camera to upload profile picture</p>
               </div>
 
-              {/* Name */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Full Name</label>
                 <div className="relative">
@@ -846,7 +860,6 @@ const HRContent = () => {
                 </div>
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Email Address</label>
                 <div className="relative">
@@ -862,7 +875,6 @@ const HRContent = () => {
                 </div>
               </div>
 
-              {/* Department */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Department</label>
                 <div className="relative">
@@ -882,7 +894,6 @@ const HRContent = () => {
                 </div>
               </div>
 
-              {/* Role */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Role / Position</label>
                 <div className="relative">
@@ -898,7 +909,6 @@ const HRContent = () => {
                 </div>
               </div>
 
-              {/* Attendance */}
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">Attendance Status</label>
                 <div className="relative">
@@ -920,13 +930,13 @@ const HRContent = () => {
                 <button 
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
                 >
                   <Save size={14} />
                   {isEditMode ? 'Save Changes' : 'Add Employee'}
@@ -939,16 +949,15 @@ const HRContent = () => {
 
       {/* EMPLOYEE DETAILS MODAL */}
       {isDetailsModalOpen && selectedEmployee && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 my-auto">
             <button 
               onClick={() => setIsDetailsModalOpen(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100 cursor-pointer"
             >
               <X size={20} />
             </button>
 
-            {/* Header with Avatar */}
             <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
               <img 
                 src={selectedEmployee.avatar} 
@@ -970,7 +979,6 @@ const HRContent = () => {
               </div>
             </div>
 
-            {/* Employee Details Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
                 <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Employee ID</p>
@@ -1019,25 +1027,24 @@ const HRContent = () => {
               </div>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
               <button 
                 onClick={() => { setIsDetailsModalOpen(false); handleOpenEditModal(selectedEmployee); }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 transition-colors cursor-pointer"
               >
                 <Edit2 size={14} />
                 Edit
               </button>
               <button 
                 onClick={() => { handleDeleteEmployee(selectedEmployee.id); setIsDetailsModalOpen(false); }}
-                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
               >
                 <Trash2 size={14} />
                 Delete
               </button>
               <button 
                 onClick={() => setIsDetailsModalOpen(false)}
-                className="bg-gray-900 text-white font-medium px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors"
+                className="bg-gray-900 text-white font-medium px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition-colors cursor-pointer"
               >
                 Close
               </button>

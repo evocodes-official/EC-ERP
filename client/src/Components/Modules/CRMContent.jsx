@@ -85,19 +85,13 @@ const CRMContent = () => {
 
   const handleAddCard = (stageKey) => {
     const newId = Math.max(...cards.map((c) => c.id), 0) + 1;
-    const now = new Date();
-    let timeLabel;
-    if (now.getHours() < 6) timeLabel = '5h ago';
-    else if (now.getDate() % 2 === 0) timeLabel = '1d ago';
-    else timeLabel = '2d ago';
-
     const card = {
       id: newId,
       stage: stageKey,
       title: newCard.title || 'New Deal',
       value: parseFloat(newCard.value) || 0,
       owner: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-      time: timeLabel,
+      time: 'Just now',
       comments: 0,
       priority: false,
       details: newCard.details || '',
@@ -110,6 +104,10 @@ const CRMContent = () => {
 
   const handleDeleteCard = (cardId) => {
     setCards(cards.filter((c) => c.id !== cardId));
+    if (selectedCard && selectedCard.id === cardId) {
+      setIsModalOpen(false);
+      setSelectedCard(null);
+    }
   };
 
   const handleEditCard = (card) => {
@@ -142,38 +140,38 @@ const CRMContent = () => {
 
     if (isEditing) {
       return (
-        <div key={card.id} className="bg-white p-4 rounded-xl border border-blue-300 shadow-sm border-l-4 border-l-blue-500">
+        <div key={card.id} className="bg-white p-4 rounded-xl border border-blue-300 shadow-sm border-l-4 border-l-blue-500 space-y-2">
           <input
             type="text"
             value={editCardData.title}
             onChange={(e) => setEditCardData({ ...editCardData, title: e.target.value })}
-            className="w-full text-xs font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full text-xs font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="Deal title"
           />
           <input
             type="number"
             value={editCardData.value}
             onChange={(e) => setEditCardData({ ...editCardData, value: e.target.value })}
-            className="w-full text-sm font-bold text-blue-600 bg-gray-50 border border-gray-200 rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full text-sm font-bold text-blue-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="Value"
           />
           <textarea
             value={editCardData.details}
             onChange={(e) => setEditCardData({ ...editCardData, details: e.target.value })}
-            className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
             placeholder="Details"
             rows={2}
           />
-          <div className="flex gap-2">
+          <div className="flex gap-2 pt-1">
             <button
               onClick={() => handleSaveEdit(card.id)}
-              className="text-[11px] font-bold bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+              className="text-xs font-bold bg-blue-600 text-white px-3.5 py-1.5 rounded-lg hover:bg-blue-700 cursor-pointer"
             >
               Save
             </button>
             <button
               onClick={() => setEditingCard(null)}
-              className="text-[11px] font-bold bg-gray-100 text-gray-600 px-3 py-1 rounded hover:bg-gray-200"
+              className="text-xs font-bold bg-gray-100 text-gray-600 px-3.5 py-1.5 rounded-lg hover:bg-gray-200 cursor-pointer"
             >
               Cancel
             </button>
@@ -185,36 +183,35 @@ const CRMContent = () => {
     return (
       <div
         key={card.id}
-        className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow relative group cursor-pointer"
+        className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all relative group cursor-pointer"
         onClick={() => openDetailModal(card)}
       >
-        {/* Action buttons - visible on hover */}
-        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+        <div className="absolute top-2.5 right-2.5 flex gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity z-10 bg-white/90 backdrop-blur-sm p-1 rounded-lg shadow-xs border border-gray-100">
           <button
             onClick={(e) => { e.stopPropagation(); handleEditCard(card); }}
-            className="p-1.5 bg-white border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-200 text-gray-500 hover:text-blue-600 shadow-sm transition-all"
+            className="p-1 hover:bg-blue-50 text-gray-400 hover:text-blue-600 rounded-md transition-colors cursor-pointer"
             title="Edit"
           >
             <Edit size={13} />
           </button>
           <button
             onClick={(e) => { e.stopPropagation(); handleDeleteCard(card.id); }}
-            className="p-1.5 bg-white border border-gray-200 rounded-lg hover:bg-red-50 hover:border-red-200 text-gray-500 hover:text-red-600 shadow-sm transition-all"
+            className="p-1 hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-md transition-colors cursor-pointer"
             title="Delete"
           >
             <Trash2 size={13} />
           </button>
         </div>
 
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-start pr-12">
           <div>
-            <h5 className="font-bold text-gray-800 text-xs">{card.title}</h5>
-            <p className="text-blue-600 font-bold text-sm mt-1">${card.value.toLocaleString()}</p>
+            <h5 className="font-bold text-gray-900 text-xs">{card.title}</h5>
+            <p className="text-blue-600 font-extrabold text-sm mt-1">${card.value.toLocaleString()}</p>
           </div>
           <img
             src={card.owner}
             alt="Owner"
-            className="w-6 h-6 rounded-full object-cover border border-gray-200"
+            className="w-7 h-7 rounded-full object-cover border border-gray-200 shrink-0"
           />
         </div>
         <div className="flex items-center justify-between text-[11px] text-gray-400 mt-4 pt-3 border-t border-gray-50">
@@ -261,7 +258,7 @@ const CRMContent = () => {
           )}
         </div>
         {card.hot && (
-          <span className="absolute top-2 left-2 text-[9px] font-black uppercase text-rose-600 bg-rose-50 px-1 py-0.2 rounded">
+          <span className="absolute top-2.5 left-2.5 text-[9px] font-black uppercase text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded tracking-wide">
             HOT
           </span>
         )}
@@ -269,42 +266,42 @@ const CRMContent = () => {
     );
   };
 
-  // Add card form
   const renderAddForm = (stageKey) => {
     if (showAddForm !== stageKey) return null;
     return (
-      <div className="bg-white p-4 rounded-xl border border-blue-300 shadow-sm border-l-4 border-l-blue-500">
+      <div className="bg-white p-4 rounded-2xl border border-blue-300 shadow-sm border-l-4 border-l-blue-500 space-y-2.5">
         <input
           type="text"
           value={newCard.title}
           onChange={(e) => setNewCard({ ...newCard, title: e.target.value })}
-          className="w-full text-xs font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full text-xs font-bold text-gray-800 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           placeholder="Deal title"
+          autoFocus
         />
         <input
           type="number"
           value={newCard.value}
           onChange={(e) => setNewCard({ ...newCard, value: e.target.value })}
-          className="w-full text-sm font-bold text-blue-600 bg-gray-50 border border-gray-200 rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full text-sm font-bold text-blue-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           placeholder="Deal value"
         />
         <textarea
           value={newCard.details}
           onChange={(e) => setNewCard({ ...newCard, details: e.target.value })}
-          className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded px-2 py-1 mb-2 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="w-full text-xs text-gray-600 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           placeholder="Details / notes"
           rows={2}
         />
-        <div className="flex gap-2">
+        <div className="flex gap-2 pt-1">
           <button
             onClick={() => handleAddCard(stageKey)}
-            className="text-[11px] font-bold bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+            className="text-xs font-bold bg-blue-600 text-white px-3.5 py-1.5 rounded-lg hover:bg-blue-700 cursor-pointer"
           >
-            Add
+            Add Deal
           </button>
           <button
             onClick={() => { setShowAddForm(null); setNewCard({ title: '', value: '', details: '' }); }}
-            className="text-[11px] font-bold bg-gray-100 text-gray-600 px-3 py-1 rounded hover:bg-gray-200"
+            className="text-xs font-bold bg-gray-100 text-gray-600 px-3.5 py-1.5 rounded-lg hover:bg-gray-200 cursor-pointer"
           >
             Cancel
           </button>
@@ -314,53 +311,50 @@ const CRMContent = () => {
   };
 
   return (
-    <div className="space-y-6 relative min-h-[calc(100vh-120px)] pb-12">
+    <div className="space-y-6 relative min-h-[calc(100vh-120px)] pb-12 w-full px-4 sm:px-6 py-6">
       {/* 1. TOP KPI METRIC CARDS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Total Deal Value Card */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-start">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-start">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
               Total Deal Value
             </p>
             <h3 className="text-3xl font-extrabold text-gray-900 mt-2">
               ${cards.reduce((sum, c) => sum + c.value, 0).toLocaleString()}
             </h3>
-            <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
+            <p className="text-xs font-semibold text-emerald-600 mt-2.5 flex items-center gap-1">
               <TrendingUp size={13} />
               <span>+12.5% from last month</span>
             </p>
           </div>
-          <div className="p-2 bg-blue-50 text-blue-600 rounded-full border border-blue-100">
+          <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl border border-blue-100">
             <DollarSign size={20} />
           </div>
         </div>
 
-        {/* Active Leads Card */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-start">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-start">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
               Active Deals
             </p>
             <h3 className="text-3xl font-extrabold text-gray-900 mt-2">{cards.length}</h3>
-            <p className="text-xs font-semibold text-emerald-600 mt-2 flex items-center gap-1">
+            <p className="text-xs font-semibold text-emerald-600 mt-2.5 flex items-center gap-1">
               <TrendingUp size={13} />
               <span>Across all stages</span>
             </p>
           </div>
-          <div className="p-2 bg-teal-50 text-teal-600 rounded-full border border-teal-100">
+          <div className="p-2.5 bg-teal-50 text-teal-600 rounded-xl border border-teal-100">
             <Share2 size={18} />
           </div>
         </div>
 
-        {/* Win Rate Card */}
-        <div className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-start">
+        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex justify-between items-start">
           <div>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400">
+            <p className="text-xs font-bold uppercase tracking-wider text-gray-400">
               Win Rate
             </p>
             <h3 className="text-3xl font-extrabold text-gray-900 mt-2">64%</h3>
-            <p className="text-xs font-semibold text-amber-500 mt-2 flex items-center gap-1">
+            <p className="text-xs font-semibold text-amber-500 mt-2.5 flex items-center gap-1">
               <MoveRight size={13} />
               <span>Stable performance</span>
             </p>
@@ -371,62 +365,60 @@ const CRMContent = () => {
       {/* Search & Sort Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search deals by name, value, or details..."
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+            className="w-full pl-10 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
           />
         </div>
         <div className="relative">
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className="appearance-none pl-8 pr-8 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer"
+            className="appearance-none w-full sm:w-auto pl-9 pr-9 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all cursor-pointer shadow-sm"
           >
             <option value="newest">Newest First</option>
             <option value="value-high">Value: High to Low</option>
             <option value="value-low">Value: Low to High</option>
             <option value="name">Name: A-Z</option>
           </select>
-          <ArrowUpDown size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-          <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <ArrowUpDown size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
         </div>
       </div>
 
       {/* 2. KANBAN DEAL PIPELINE STAGES */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 overflow-x-auto pb-4 items-start">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 overflow-x-auto pb-4 items-start">
         {stages.map((stage) => (
-          <div key={stage.key} className="space-y-3 min-w-[260px]">
-            {/* Stage Header */}
+          <div key={stage.key} className="space-y-3.5 min-w-[280px] bg-slate-50/70 p-4.5 rounded-2xl border border-gray-200/60 shadow-xs">
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center space-x-2">
                 <span className={`w-2.5 h-2.5 rounded-full ${stage.color}`}></span>
                 <h4 className="font-bold text-gray-900 text-sm">{stage.label}</h4>
-                <span className="bg-gray-100 text-gray-600 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                <span className="bg-white text-gray-600 text-xs font-bold px-2 py-0.5 rounded-md border border-gray-200/80 shadow-2xs">
                   {getStageCount(stage.key)}
                 </span>
               </div>
               <button
                 onClick={() => setShowAddForm(showAddForm === stage.key ? null : stage.key)}
-                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-white rounded-lg transition-all cursor-pointer shadow-2xs"
                 title={`Add to ${stage.label}`}
               >
                 <Plus size={16} />
               </button>
             </div>
 
-            {/* Add form */}
             {renderAddForm(stage.key)}
 
-            {/* Cards */}
-            {getCardsByStage(stage.key).map((card) => renderCard(card))}
+            <div className="space-y-3">
+              {getCardsByStage(stage.key).map((card) => renderCard(card))}
+            </div>
 
-            {/* Empty state */}
             {getCardsByStage(stage.key).length === 0 && showAddForm !== stage.key && (
-              <div className="text-center py-6 text-gray-400 text-xs italic">
+              <div className="text-center py-8 text-gray-400 text-xs italic">
                 No deals in {stage.label}
               </div>
             )}
@@ -436,15 +428,12 @@ const CRMContent = () => {
 
       {/* Detail Modal */}
       {isModalOpen && selectedCard && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeDetailModal}></div>
-          {/* Modal */}
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] overflow-y-auto animate-in zoom-in-95 duration-200">
-            {/* Modal Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={closeDetailModal}></div>
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in zoom-in-95 duration-200 my-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                <div className="p-2.5 bg-blue-50 text-blue-600 rounded-xl">
                   <Building2 size={20} />
                 </div>
                 <div>
@@ -454,21 +443,19 @@ const CRMContent = () => {
               </div>
               <button
                 onClick={closeDetailModal}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all"
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="px-6 py-5 space-y-5">
-              {/* Value & Stage */}
+            <div className="px-6 py-6 space-y-5">
               <div className="grid grid-cols-2 gap-4">
-                <div className="bg-gray-50 rounded-xl p-4">
+                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Deal Value</p>
                   <p className="text-2xl font-extrabold text-blue-600">${selectedCard.value.toLocaleString()}</p>
                 </div>
-                <div className="bg-gray-50 rounded-xl p-4">
+                <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Stage</p>
                   <div className="flex items-center gap-2 mt-1">
                     <span className={`w-2.5 h-2.5 rounded-full ${stages.find(s => s.key === selectedCard.stage)?.color}`}></span>
@@ -477,44 +464,42 @@ const CRMContent = () => {
                 </div>
               </div>
 
-              {/* Details */}
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
                   <FileText size={13} /> Description
                 </p>
-                <p className="text-sm text-gray-600 bg-gray-50 rounded-xl p-4 leading-relaxed">
+                <p className="text-sm text-gray-600 bg-gray-50 rounded-2xl p-4 leading-relaxed border border-gray-100">
                   {selectedCard.details || 'No additional details provided.'}
                 </p>
               </div>
 
-              {/* Additional Info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4 text-sm">
                 {selectedCard.time && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600">
                     <Calendar size={14} className="text-gray-400" />
                     <span>Last activity: <span className="font-semibold text-gray-800">{selectedCard.time}</span></span>
                   </div>
                 )}
                 {selectedCard.fit && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600">
                     <Tag size={14} className="text-gray-400" />
                     <span>Fit: <span className="font-semibold text-purple-600">{selectedCard.fit}</span></span>
                   </div>
                 )}
                 {selectedCard.priority && (
-                  <div className="flex items-center gap-2 text-sm text-amber-600 font-semibold">
+                  <div className="flex items-center gap-2 text-amber-600 font-semibold">
                     <AlertTriangle size={14} />
                     <span>Priority deal</span>
                   </div>
                 )}
                 {selectedCard.hot && (
-                  <div className="flex items-center gap-2 text-sm text-rose-600 font-semibold">
+                  <div className="flex items-center gap-2 text-rose-600 font-semibold">
                     <AlertTriangle size={14} />
                     <span>HOT deal</span>
                   </div>
                 )}
                 {selectedCard.comments !== undefined && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-gray-600">
                     <MessageSquare size={14} className="text-gray-400" />
                     <span>{selectedCard.comments} comments</span>
                   </div>
@@ -522,23 +507,22 @@ const CRMContent = () => {
               </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 px-6 py-3 rounded-b-2xl flex justify-end gap-2">
+            <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 px-6 py-4 rounded-b-2xl flex justify-end gap-2.5">
               <button
                 onClick={() => { handleEditCard(selectedCard); closeDetailModal(); }}
-                className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 bg-white border border-blue-200 px-4 py-2 rounded-xl hover:bg-blue-50 transition-all"
+                className="flex items-center gap-1.5 text-sm font-semibold text-blue-600 bg-white border border-blue-200 px-4 py-2.5 rounded-xl hover:bg-blue-50 transition-all shadow-2xs cursor-pointer"
               >
                 <Edit size={14} /> Edit
               </button>
               <button
                 onClick={() => { handleDeleteCard(selectedCard.id); closeDetailModal(); }}
-                className="flex items-center gap-1.5 text-sm font-semibold text-red-600 bg-white border border-red-200 px-4 py-2 rounded-xl hover:bg-red-50 transition-all"
+                className="flex items-center gap-1.5 text-sm font-semibold text-red-600 bg-white border border-red-200 px-4 py-2.5 rounded-xl hover:bg-red-50 transition-all shadow-2xs cursor-pointer"
               >
                 <Trash2 size={14} /> Delete
               </button>
               <button
                 onClick={closeDetailModal}
-                className="text-sm font-semibold text-gray-600 bg-gray-100 px-4 py-2 rounded-xl hover:bg-gray-200 transition-all"
+                className="text-sm font-semibold text-gray-600 bg-gray-200/70 px-4 py-2.5 rounded-xl hover:bg-gray-200 transition-all cursor-pointer"
               >
                 Close
               </button>
@@ -547,8 +531,12 @@ const CRMContent = () => {
         </div>
       )}
 
-      {/* Floating Add Button (kept for quick access) */}
-      <button className="fixed bottom-8 right-8 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all z-20">
+      {/* Floating Add Button */}
+      <button 
+        onClick={() => setShowAddForm('leads')}
+        className="fixed bottom-8 right-8 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full flex items-center justify-center shadow-lg hover:shadow-xl transition-all z-20 cursor-pointer"
+        title="Add New Deal"
+      >
         <Plus size={24} />
       </button>
     </div>

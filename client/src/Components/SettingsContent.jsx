@@ -41,7 +41,7 @@ const SettingsContent = () => {
   };
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-6 pb-12 w-full px-4 sm:px-6 py-6">
       {/* Title & Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -50,7 +50,7 @@ const SettingsContent = () => {
             Manage your organization profile, security policies, and enterprise integrations.
           </p>
         </div>
-        <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow-sm transition-colors w-fit">
+        <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-colors w-fit cursor-pointer">
           <Save size={15} />
           <span>Save Changes</span>
         </button>
@@ -70,7 +70,7 @@ const SettingsContent = () => {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center space-x-2 px-4 py-2.5 rounded-t-xl transition-all whitespace-nowrap ${
+              className={`flex items-center space-x-2 px-4 py-2.5 rounded-t-xl transition-all whitespace-nowrap cursor-pointer ${
                 isActive
                   ? 'bg-white text-blue-600 border-t-2 border-blue-600 font-bold shadow-sm'
                   : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100/60'
@@ -99,7 +99,7 @@ const SettingsContent = () => {
                 EVO
               </div>
               <div>
-                <button className="flex items-center space-x-2 bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm">
+                <button className="flex items-center space-x-2 bg-white border border-gray-200 px-3.5 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 shadow-sm cursor-pointer">
                   <Upload size={14} />
                   <span>Upload New Logo</span>
                 </button>
@@ -109,36 +109,36 @@ const SettingsContent = () => {
 
             {/* Form Fields Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700">Organization Name</label>
                 <input
                   type="text"
                   defaultValue="EVO Global Solutions Inc."
-                  className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700">Enterprise Domain</label>
                 <input
                   type="text"
                   defaultValue="evo-erp.com"
-                  className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700">Support Email</label>
                 <input
                   type="email"
                   defaultValue="support@evo-erp.com"
-                  className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                 />
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700">Primary Timezone</label>
-                <select className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white">
+                <select className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white cursor-pointer">
                   <option>(UTC-05:00) Eastern Time (US & Canada)</option>
                   <option>(UTC+00:00) London, GMT</option>
                   <option>(UTC+05:30) New Delhi, IST</option>
@@ -155,18 +155,18 @@ const SettingsContent = () => {
             </div>
 
             <div className="space-y-4 text-xs font-medium">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="font-semibold text-gray-700">Default Currency</label>
-                <select className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs text-gray-800">
+                <select className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer">
                   <option>USD ($) - US Dollar</option>
                   <option>EUR (€) - Euro</option>
                   <option>GBP (£) - British Pound</option>
                 </select>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <label className="font-semibold text-gray-700">Fiscal Year Start</label>
-                <select className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs text-gray-800">
+                <select className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer">
                   <option>January 1st</option>
                   <option>April 1st</option>
                   <option>October 1st</option>
@@ -177,7 +177,7 @@ const SettingsContent = () => {
                 <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2">
                   System Plan
                 </p>
-                <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between">
+                <div className="p-3.5 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between">
                   <div>
                     <span className="text-xs font-bold text-blue-900">Enterprise Scale</span>
                     <p className="text-[10px] text-blue-600">Unlimited users • 2TB Storage</p>
@@ -215,7 +215,7 @@ const SettingsContent = () => {
                 </div>
                 <button
                   onClick={() => handleToggle('twoFactor')}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
                     toggles.twoFactor ? 'bg-blue-600 justify-end' : 'bg-gray-200 justify-start'
                   }`}
                 >
@@ -236,7 +236,7 @@ const SettingsContent = () => {
                 </div>
                 <button
                   onClick={() => handleToggle('auditAlerts')}
-                  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                  className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
                     toggles.auditAlerts ? 'bg-blue-600 justify-end' : 'bg-gray-200 justify-start'
                   }`}
                 >
@@ -246,18 +246,18 @@ const SettingsContent = () => {
             </div>
 
             {/* Password Update Form */}
-            <div className="pt-4 border-t border-gray-100">
-              <h4 className="font-bold text-gray-900 text-xs mb-3">Change Admin Master Password</h4>
+            <div className="pt-4 border-t border-gray-100 space-y-3">
+              <h4 className="font-bold text-gray-900 text-xs">Change Admin Master Password</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="password"
                   placeholder="Current Password"
-                  className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs"
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs"
                 />
                 <input
                   type="password"
                   placeholder="New Password"
-                  className="w-full bg-gray-50 border border-gray-200 px-3 py-2 rounded-xl text-xs"
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs"
                 />
               </div>
             </div>
@@ -267,7 +267,7 @@ const SettingsContent = () => {
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-gray-900">Active Admin Sessions</h3>
             <div className="space-y-3 text-xs">
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
+              <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-gray-800">Chrome on macOS</p>
                   <p className="text-[10px] text-gray-400">192.168.1.45 • New York, USA</p>
@@ -277,12 +277,12 @@ const SettingsContent = () => {
                 </span>
               </div>
 
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
+              <div className="p-3.5 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between">
                 <div>
                   <p className="font-bold text-gray-800">EVO Mobile App (iOS)</p>
                   <p className="text-[10px] text-gray-400">2 hours ago</p>
                 </div>
-                <button className="text-[10px] font-semibold text-rose-600 hover:underline">Revoke</button>
+                <button className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer">Revoke</button>
               </div>
             </div>
           </div>
@@ -305,7 +305,7 @@ const SettingsContent = () => {
               </div>
               <button
                 onClick={() => handleToggle('emailNotifs')}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
                   toggles.emailNotifs ? 'bg-blue-600 justify-end' : 'bg-gray-200 justify-start'
                 }`}
               >
@@ -320,7 +320,7 @@ const SettingsContent = () => {
               </div>
               <button
                 onClick={() => handleToggle('weeklyReport')}
-                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
+                className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors cursor-pointer ${
                   toggles.weeklyReport ? 'bg-blue-600 justify-end' : 'bg-gray-200 justify-start'
                 }`}
               >
@@ -341,18 +341,18 @@ const SettingsContent = () => {
               <p className="text-xs text-gray-400">Access ERP webhooks, REST endpoints, and custom integrations.</p>
             </div>
 
-            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-2">
+            <div className="p-4 bg-gray-50 rounded-2xl border border-gray-200 space-y-2">
               <label className="text-xs font-bold text-gray-700">Production Secret Token</label>
               <div className="flex items-center space-x-2">
                 <input
                   type="password"
                   readOnly
                   value="evo_live_89f92a41b7e0982c44"
-                  className="w-full bg-white border border-gray-200 px-3 py-2 rounded-lg text-xs font-mono text-gray-700"
+                  className="w-full bg-white border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-mono text-gray-700 shadow-2xs"
                 />
                 <button
                   onClick={copyApiKey}
-                  className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-xs font-semibold shrink-0 transition-colors"
+                  className="flex items-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shrink-0 transition-colors cursor-pointer"
                 >
                   {copied ? <CheckCircle2 size={14} /> : <Copy size={14} />}
                   <span>{copied ? 'Copied' : 'Copy Key'}</span>
@@ -364,10 +364,10 @@ const SettingsContent = () => {
             <div className="pt-2 space-y-3">
               <h4 className="font-bold text-gray-900 text-xs">Connected External Tools</h4>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="p-3 bg-white border border-gray-100 rounded-xl shadow-xs flex items-center justify-between">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div className="p-3.5 bg-white border border-gray-100 rounded-2xl shadow-2xs flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                    <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl">
                       <Database size={18} />
                     </div>
                     <div>
@@ -380,9 +380,9 @@ const SettingsContent = () => {
                   </span>
                 </div>
 
-                <div className="p-3 bg-white border border-gray-100 rounded-xl shadow-xs flex items-center justify-between">
+                <div className="p-3.5 bg-white border border-gray-100 rounded-2xl shadow-2xs flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-50 text-purple-600 rounded-lg">
+                    <div className="p-2 bg-purple-50 text-purple-600 rounded-xl">
                       <Layers size={18} />
                     </div>
                     <div>
@@ -390,7 +390,7 @@ const SettingsContent = () => {
                       <p className="text-[10px] text-gray-400">CRM Pipeline</p>
                     </div>
                   </div>
-                  <button className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-0.5">
+                  <button className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-0.5 cursor-pointer">
                     Connect <ExternalLink size={10} />
                   </button>
                 </div>
@@ -402,17 +402,17 @@ const SettingsContent = () => {
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm space-y-4">
             <h3 className="text-base font-bold text-gray-900">API Health & Quota</h3>
             <div className="space-y-3 text-xs">
-              <div className="flex justify-between py-1 border-b border-gray-100">
+              <div className="flex justify-between py-1.5 border-b border-gray-100">
                 <span className="text-gray-500">Monthly Request Limit</span>
                 <span className="font-bold text-gray-800">850,000 / 1M</span>
               </div>
-              <div className="flex justify-between py-1 border-b border-gray-100">
+              <div className="flex justify-between py-1.5 border-b border-gray-100">
                 <span className="text-gray-500">API Gateway Status</span>
                 <span className="font-bold text-emerald-600 flex items-center gap-1">
                   <CheckCircle2 size={12} /> Operational
                 </span>
               </div>
-              <div className="flex justify-between py-1">
+              <div className="flex justify-between py-1.5">
                 <span className="text-gray-500">Webhooks Configured</span>
                 <span className="font-bold text-gray-800">4 Active</span>
               </div>

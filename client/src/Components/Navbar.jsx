@@ -266,15 +266,6 @@ const Navbar = ({ setActiveTab, onMenuClick }) => { // <-- Added onMenuClick pro
         >
           <Menu size={22} />
         </button>
-
-        <div className="relative flex-1 max-w-[150px] sm:max-w-xs transition-all">
-          <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search modules..."
-            className="w-full bg-gray-50 pl-9 pr-3 py-1.5 rounded-lg text-xs border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all truncate"
-          />
-        </div>
       </div>
 
       {/* RESPONSIVE RIGHT SIDE (Actions) */}
