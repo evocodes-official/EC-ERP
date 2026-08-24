@@ -15,6 +15,7 @@ import HelpContent from './Components/HelpContent';
 // --- NEW COMPONENTS INTEGRATION ---
 import Inventories from './Components/modules/Inventories'; 
 import Premium from './Components/Premium'; 
+import ProfileContent from './Components/ProfileContent'; 
 
 export default function ERP() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -39,6 +40,7 @@ export default function ERP() {
       case 'reports': return <ReportsContent />;
       case 'settings': return <SettingsContent />;
       case 'premium': return <Premium />;
+      case 'profile': return <ProfileContent />;
       case 'help': return <HelpContent />;
       default: return <DashboardContent />;
     }
