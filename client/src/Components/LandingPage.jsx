@@ -124,50 +124,57 @@ const LandingPage = ({ onLogin, onNavigate }) => {
 
   const pricingPlans = [
     {
-      name: 'Starter',
-      price: '$0',
-      period: '/month',
-      desc: 'Perfect for small teams getting started',
+      name: 'Basic',
+      price: 'Free',
+      period: '/mo',
+      desc: 'Perfect for individuals or small teams getting started.',
       features: [
-        'Up to 5 users',
-        'Core modules (HR, CRM)',
-        'Basic reporting',
-        'Email support',
-        '1GB storage'
+        'Up to 5 Users',
+        'Basic Inventory',
+        'Standard Dashboards',
+        'Community Support'
       ],
       cta: 'Start Free',
       highlighted: false
     },
     {
-      name: 'Professional',
-      price: '$49',
-      period: '/month',
-      desc: 'For growing businesses that need more power',
+      name: 'Starter',
+      price: '$19',
+      period: '/mo',
+      desc: 'Essential tools for growing businesses.',
       features: [
-        'Up to 25 users',
-        'All modules included',
-        'Advanced analytics',
-        'Priority support',
-        '50GB storage',
-        'Custom integrations',
-        'API access'
+        'Up to 20 Users',
+        'Advanced CRM Tracking',
+        'Financial Reports',
+        'Priority Email Support'
       ],
       cta: 'Get Started',
+      highlighted: false
+    },
+    {
+      name: 'Premium',
+      price: '$49',
+      period: '/mo',
+      desc: 'Full control for scaling enterprises.',
+      features: [
+        'Unlimited Users',
+        'Multi-Warehouse Inventory',
+        'Custom Analytics',
+        '24/7 Phone Support'
+      ],
+      cta: 'Get Premium',
       highlighted: true
     },
     {
       name: 'Enterprise',
       price: '$99',
-      period: '/month',
-      desc: 'For large organizations with complex needs',
+      period: '/mo',
+      desc: 'Custom solutions for large corporations.',
       features: [
-        'Unlimited users',
-        'Everything in Professional',
-        'Dedicated account manager',
-        '24/7 phone support',
-        'Unlimited storage',
-        'SSO & advanced security',
-        'Custom SLA'
+        'Dedicated Cloud Server',
+        'Custom API Integrations',
+        'White-label Branding',
+        'Dedicated Account Manager'
       ],
       cta: 'Contact Sales',
       highlighted: false
@@ -527,7 +534,7 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {pricingPlans.map((plan, i) => (
               <div
                 key={i}
