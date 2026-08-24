@@ -15,7 +15,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 
-const DashboardContent = () => {
+const DashboardContent = ({ onNavigate }) => {
   return (
     <div className="space-y-6">
       {/* Title & Actions Header */}
@@ -213,19 +213,19 @@ const DashboardContent = () => {
         <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
           <h2 className="font-bold text-gray-800 mb-4">Quick Actions</h2>
           <div className="grid grid-cols-2 gap-3">
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
+            <button onClick={() => onNavigate('hr')} className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
               <UserPlus size={20} className="mb-2" />
               <span className="text-xs font-semibold">New Employee</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
+            <button onClick={() => onNavigate('finance')} className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
               <FileText size={20} className="mb-2" />
               <span className="text-xs font-semibold">New Invoice</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
+            <button onClick={() => onNavigate('projects')} className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
               <CheckSquare size={20} className="mb-2" />
               <span className="text-xs font-semibold">Assign Task</span>
             </button>
-            <button className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
+            <button onClick={() => onNavigate('reports')} className="flex flex-col items-center justify-center p-4 bg-gray-50 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-all border border-gray-100 text-gray-700">
               <BarChart2 size={20} className="mb-2" />
               <span className="text-xs font-semibold">Run Report</span>
             </button>

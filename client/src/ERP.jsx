@@ -30,7 +30,7 @@ export default function ERP() {
 
   const renderActiveComponent = () => {
     switch (activeTab) {
-      case 'dashboard': return <DashboardContent />;
+      case 'dashboard': return <DashboardContent onNavigate={handleTabChange} />;
       case 'hr': return <HRContent />;
       case 'crm': return <CRMContent />;
       case 'finance': return <FinanceContent />;
