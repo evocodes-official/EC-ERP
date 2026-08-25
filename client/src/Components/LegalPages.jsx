@@ -1,9 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Grid, ArrowLeft, FileText, Shield, Copyright, Menu, X } from 'lucide-react';
 
-const LegalPages = ({ onBack }) => {
-  const [activePage, setActivePage] = useState('terms');
+const LegalPages = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const getActivePage = () => {
+    if (location.pathname === '/privacy') return 'privacy';
+    if (location.pathname === '/copyright') return 'copyright';
+    return 'terms';
+  };
+
+  const [activePage, setActivePage] = useState(getActivePage());
+
+  useEffect(() => {
+    setActivePage(getActivePage());
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [location.pathname]);
 
   const pages = [
     { id: 'terms', label: 'Terms & Conditions', icon: FileText },
@@ -92,8 +107,8 @@ const LegalPages = ({ onBack }) => {
       content: 'We retain your personal information for as long as necessary to provide the Service and fulfill the purposes described in this Privacy Policy, unless a longer retention period is required or permitted by law.'
     },
     {
-      title: '8. Children\'s Privacy',
-      content: 'The Service is not directed to individuals under the age of 16. We do not knowingly collect personal information from children. If we become aware that we have collected personal information from a child, we will take steps to delete such information.'
+      title: "8. Children's Privacy",
+      content: "The Service is not directed to individuals under the age of 16. We do not knowingly collect personal information from children. If we become aware that we have collected personal information from a child, we will take steps to delete such information."
     },
     {
       title: '9. Changes to This Policy',
@@ -185,24 +200,20 @@ const LegalPages = ({ onBack }) => {
             {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center gap-8">
               {pages.map((page) => (
-                <button
+                <Link
                   key={page.id}
-                  onClick={() => setActivePage(page.id)}
-                  className={`text-sm font-medium transition-colors ${
-                    activePage === page.id
-                      ? 'text-blue-600 font-semibold'
-                      : 'text-gray-600 hover:text-blue-600'
-                  }`}
+                  to={`/${page.id}`}
+                  className="text-sm font-medium transition-colors"
                 >
                   {page.label}
-                </button>
+                </Link>
               ))}
             </div>
 
             {/* Back Button */}
             <div className="hidden md:flex items-center gap-3">
               <button
-                onClick={onBack}
+                onClick={() => navigate('/')}
                 className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
               >
                 <ArrowLeft size={16} />
@@ -224,24 +235,22 @@ const LegalPages = ({ onBack }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-b border-gray-100 px-4 py-4 space-y-3">
             {pages.map((page) => (
-              <button
+              <Link
                 key={page.id}
-                onClick={() => {
-                  setActivePage(page.id);
-                  setIsMobileMenuOpen(false);
-                }}
-                className={`block w-full text-left text-sm font-medium py-2 transition-colors ${
+                to={`/${page.id}`}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`block text-left text-sm font-medium py-2 transition-colors ${
                   activePage === page.id
                     ? 'text-blue-600 font-semibold'
                     : 'text-gray-600 hover:text-blue-600'
                 }`}
               >
                 {page.label}
-              </button>
+              </Link>
             ))}
             <button
               onClick={() => {
-                onBack();
+                navigate('/');
                 setIsMobileMenuOpen(false);
               }}
               className="flex items-center gap-2 w-full px-4 py-2 text-sm font-semibold text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 transition-all"
@@ -286,9 +295,9 @@ const LegalPages = ({ onBack }) => {
           {/* Mobile Page Tabs */}
           <div className="md:hidden flex gap-2 mb-8 overflow-x-auto pb-2">
             {pages.map((page) => (
-              <button
+              <Link
                 key={page.id}
-                onClick={() => setActivePage(page.id)}
+                to={`/${page.id}`}
                 className={`shrink-0 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                   activePage === page.id
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
@@ -296,7 +305,7 @@ const LegalPages = ({ onBack }) => {
                 }`}
               >
                 {page.label}
-              </button>
+              </Link>
             ))}
           </div>
 
@@ -327,7 +336,7 @@ const LegalPages = ({ onBack }) => {
                 legal@evocodes.com
               </a>
               <button
-                onClick={onBack}
+                onClick={() => navigate('/')}
                 className="inline-flex items-center gap-2 bg-blue-700/50 text-white font-semibold px-6 py-3 rounded-xl text-sm transition-all hover:bg-blue-700/70"
               >
                 <ArrowLeft size={16} />
@@ -349,15 +358,15 @@ const LegalPages = ({ onBack }) => {
               <p className="text-xs">© 2026 EvoCodes. All rights reserved.</p>
             </div>
             <div className="flex gap-6 text-xs">
-              <button onClick={() => setActivePage('terms')} className="hover:text-blue-400 transition-colors">
+              <Link to="/terms" className="hover:text-blue-400 transition-colors">
                 Terms & Conditions
-              </button>
-              <button onClick={() => setActivePage('privacy')} className="hover:text-blue-400 transition-colors">
+              </Link>
+              <Link to="/privacy" className="hover:text-blue-400 transition-colors">
                 Privacy Policy
-              </button>
-              <button onClick={() => setActivePage('copyright')} className="hover:text-blue-400 transition-colors">
+              </Link>
+              <Link to="/copyright" className="hover:text-blue-400 transition-colors">
                 Copyright
-              </button>
+              </Link>
             </div>
           </div>
         </div>

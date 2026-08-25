@@ -32,10 +32,10 @@ import {
 } from 'lucide-react';
 
 const ProfileContent = () => {
-  // Load user from LinkedIn sign-in (stored by LinkedInCallback) or use a demo profile
+  // Load the signed-in user (stored on login) or fall back to a demo profile
   const getStoredUser = () => {
     try {
-      const raw = localStorage.getItem('linkedin_user');
+      const raw = localStorage.getItem('ec_erp_user');
       if (raw) {
         const u = JSON.parse(raw);
         if (u.name || u.email) return u;

@@ -865,10 +865,10 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-blue-400 transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-blue-400 transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Integrations</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Changelog</a></li>
+                <li><button onClick={() => scrollToSection('features')} className="hover:text-blue-400 transition-colors">Features</button></li>
+                <li><button onClick={() => scrollToSection('pricing')} className="hover:text-blue-400 transition-colors">Pricing</button></li>
+                <li><button onClick={() => scrollToSection('testimonials')} className="hover:text-blue-400 transition-colors">Customers</button></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Contact</button></li>
               </ul>
             </div>
 
@@ -876,10 +876,9 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Blog</a></li>
-                <li><a href="#contact" className="hover:text-blue-400 transition-colors">Contact</a></li>
+                <li><button onClick={() => navigate('/terms')} className="hover:text-blue-400 transition-colors">Terms & Conditions</button></li>
+                <li><button onClick={() => navigate('/privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/copyright')} className="hover:text-blue-400 transition-colors">Copyright</button></li>
               </ul>
             </div>
 
@@ -887,10 +886,9 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm">Support</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">API Reference</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Status</a></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Help Center</button></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Documentation</button></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Contact Support</button></li>
               </ul>
             </div>
           </div>
@@ -898,9 +896,9 @@ const LandingPage = ({ onLogin, onNavigate }) => {
           <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs">© 2026 EvoCodes. All rights reserved.</p>
             <div className="flex gap-6 text-xs">
-              <button onClick={() => onNavigate('privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button>
-              <button onClick={() => onNavigate('terms')} className="hover:text-blue-400 transition-colors">Terms & Conditions</button>
-              <button onClick={() => onNavigate('copyright')} className="hover:text-blue-400 transition-colors">Copyright</button>
+              <button onClick={() => navigate('/privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button>
+              <button onClick={() => navigate('/terms')} className="hover:text-blue-400 transition-colors">Terms & Conditions</button>
+              <button onClick={() => navigate('/copyright')} className="hover:text-blue-400 transition-colors">Copyright</button>
             </div>
           </div>
         </div>
