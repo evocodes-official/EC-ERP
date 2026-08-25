@@ -257,11 +257,6 @@ const CRMContent = () => {
             </span>
           )}
         </div>
-        {card.hot && (
-          <span className="absolute top-2.5 left-2.5 text-[9px] font-black uppercase text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded tracking-wide">
-            HOT
-          </span>
-        )}
       </div>
     );
   };

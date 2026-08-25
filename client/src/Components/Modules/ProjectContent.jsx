@@ -1,22 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import { 
   Plus, Search, Filter, Calendar, BarChart2, X, CheckSquare, 
   Code, MessageSquare, Grid, User, Trash2, Edit3, 
   MoreHorizontal, Share2, Layout, FileText, 
   AlertCircle, ChevronLeft, Folder, Briefcase, Activity
 } from 'lucide-react';
-
-// --- INITIAL DATA ---
-const initialTasks = [
-  { id: 'DT-10', title: 'User Authentication API integration with OAuth2', category: 'Backend', categoryColor: 'bg-purple-100 text-purple-700 border border-purple-200', status: 'todo', dueDate: 'Jul 31, 2026', assigneeInitials: 'AL', assigneeBg: 'bg-blue-600', hasCheck: true },
-  { id: 'DT-53', title: 'Analysis on Dashboard Data analyzer user flow', category: 'Designing', categoryColor: 'bg-blue-100 text-blue-700 border border-blue-200', status: 'todo', dueDate: 'Jul 21, 2026', assigneeInitials: 'AL', assigneeBg: 'bg-blue-600', hasCheck: true, isOverdue: true },
-  { id: 'DT-75', title: 'Innovation framework and competitor market research', category: 'RND', categoryColor: 'bg-amber-100 text-amber-700 border border-amber-200', status: 'todo', dueDate: 'Aug 05, 2026', assigneeInitials: 'AG', assigneeBg: 'bg-amber-600', hasCheck: true },
-  { id: 'DT-15', title: 'Customer feedback forms question based rating UI development', category: 'Frontend', categoryColor: 'bg-teal-100 text-teal-700 border border-teal-200', status: 'in-progress', dueDate: 'Jul 13, 2026', assigneeInitials: 'AG', assigneeBg: 'bg-amber-600', hasCheck: true, isOverdue: true },
-  { id: 'DT-12', title: 'User profile image upload and privacy settings module', category: 'Frontend', categoryColor: 'bg-teal-100 text-teal-700 border border-teal-200', status: 'in-progress', dueDate: 'Jul 2, 2026', assigneeInitials: 'AL', assigneeBg: 'bg-blue-600', hasCheck: true, isOverdue: true },
-  { id: 'DT-81', title: 'Landing page user statistics API integration', category: 'Backend', categoryColor: 'bg-purple-100 text-purple-700 border border-purple-200', status: 'done', dueDate: 'Jul 10, 2026', assigneeInitials: 'AG', assigneeBg: 'bg-amber-600', hasCheck: true },
-  { id: 'DT-82', title: 'GET, PUT, DELETE method of Support Contact Request', category: 'Backend', categoryColor: 'bg-purple-100 text-purple-700 border border-purple-200', status: 'done', dueDate: 'Jul 11, 2026', assigneeInitials: 'AG', assigneeBg: 'bg-amber-600', hasCheck: true },
-  { id: 'DT-63', title: 'Admins panel layout, routing, and access control', category: 'Frontend', categoryColor: 'bg-teal-100 text-teal-700 border border-teal-200', status: 'done', dueDate: 'Jul 22, 2026', assigneeInitials: 'AG', assigneeBg: 'bg-amber-600', hasCheck: true }
-];
 
 const columnsConfig = [
   { id: 'todo', title: 'To Do', color: 'bg-slate-400' },
@@ -49,10 +38,19 @@ function ProjectContent({ project, onBack, updateTasks }) {
   
   const handleDragOver = (e) => e.preventDefault();
   
-  const handleDrop = (e, targetStatus) => {
+  const handleDrop = async (e, targetStatus) => {
     e.preventDefault();
     if (!draggedTaskId) return;
-    setTasks((prevTasks) => prevTasks.map((t) => t.id === draggedTaskId ? { ...t, status: targetStatus } : t));
+
+    const taskToUpdate = tasks.find(t => t.id === draggedTaskId || t.taskId === draggedTaskId);
+    const identifier = taskToUpdate ? (taskToUpdate.taskId || taskToUpdate.id) : draggedTaskId;
+
+    try {
+      await axios.patch(`http://localhost:8000/api/projects/tasks/${identifier}`, { status: targetStatus });
+      setTasks((prevTasks) => prevTasks.map((t) => (t.id === draggedTaskId || t.taskId === draggedTaskId) ? { ...t, status: targetStatus } : t));
+    } catch (error) {
+      console.error('Error updating task status:', error);
+    }
     setDraggedTaskId(null);
   };
 
@@ -63,38 +61,55 @@ function ProjectContent({ project, onBack, updateTasks }) {
 
   const handleOpenEditModal = (task, e) => {
     e.stopPropagation();
-    setEditingTaskId(task.id); setFormTitle(task.title); setFormCategory(task.category);
+    setEditingTaskId(task.taskId || task.id); setFormTitle(task.title); setFormCategory(task.category);
     setFormDueDate(task.dueDate); setFormAssignee(task.assigneeInitials || 'AL'); setIsModalOpen(true);
   };
 
-  const handleSaveTask = (e) => {
+  const handleSaveTask = async (e) => {
     e.preventDefault();
     if (!formTitle.trim()) return;
     let catColor = 'bg-purple-100 text-purple-700 border border-purple-200';
     if (formCategory === 'Frontend') catColor = 'bg-teal-100 text-teal-700 border border-teal-200';
     if (formCategory === 'RND' || formCategory === 'Designing') catColor = 'bg-blue-100 text-blue-700 border border-blue-200';
 
-    if (editingTaskId) {
-      setTasks(prev => prev.map(t => {
-        if (t.id === editingTaskId) {
-          return { ...t, title: formTitle, category: formCategory, categoryColor: catColor, dueDate: formDueDate, assigneeInitials: formAssignee };
-        }
-        return t;
-      }));
-    } else {
-      const newTask = {
-        id: `DT-${Math.floor(100 + Math.random() * 900)}`,
-        title: formTitle, category: formCategory, categoryColor: catColor, status: 'todo', dueDate: formDueDate,
-        assigneeInitials: formAssignee, assigneeBg: formAssignee === 'AG' ? 'bg-amber-600' : 'bg-blue-600', hasCheck: true,
-      };
-      setTasks(prev => [newTask, ...prev]);
+    try {
+      if (editingTaskId) {
+        const response = await axios.patch(`http://localhost:8000/api/projects/tasks/${editingTaskId}`, {
+          title: formTitle,
+          category: formCategory,
+          categoryColor: catColor,
+          dueDate: formDueDate,
+          assigneeInitials: formAssignee
+        });
+        const updated = response.data;
+        setTasks(prev => prev.map(t => ((t.taskId === editingTaskId || t.id === editingTaskId) ? { ...t, ...updated, id: updated.taskId || t.id } : t)));
+      } else {
+        const response = await axios.post(`http://localhost:8000/api/projects/${project.id}/tasks`, {
+          title: formTitle,
+          category: formCategory,
+          categoryColor: catColor,
+          dueDate: formDueDate,
+          assigneeInitials: formAssignee,
+          assigneeBg: formAssignee === 'AG' ? 'bg-amber-600' : 'bg-blue-600'
+        });
+        const createdTask = response.data;
+        const formattedTask = { ...createdTask, id: createdTask.taskId || createdTask._id };
+        setTasks(prev => [formattedTask, ...prev]);
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error('Error saving task:', error);
     }
-    setIsModalOpen(false);
   };
 
-  const handleDeleteTask = (taskId, e) => {
+  const handleDeleteTask = async (taskId, e) => {
     e.stopPropagation();
-    setTasks(prev => prev.filter(t => t.id !== taskId));
+    try {
+      await axios.delete(`http://localhost:8000/api/projects/tasks/${taskId}`);
+      setTasks(prev => prev.filter(t => t.id !== taskId && t.taskId !== taskId));
+    } catch (error) {
+      console.error('Error deleting task:', error);
+    }
   };
 
   // --- ANALYTICS DATA ---
@@ -108,7 +123,8 @@ function ProjectContent({ project, onBack, updateTasks }) {
   const filteredTasks = tasks.filter((task) =>
     task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     task.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    task.id.toLowerCase().includes(searchQuery.toLowerCase())
+    (task.id && task.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (task.taskId && task.taskId.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // --- RENDER VIEWS BASED ON TAB ---
@@ -135,33 +151,36 @@ function ProjectContent({ project, onBack, updateTasks }) {
                   </div>
 
                   <div className="flex-1 overflow-y-auto space-y-3 pr-1 custom-scrollbar min-h-0">
-                    {columnTasks.map((task) => (
-                      <div key={task.id} draggable onDragStart={(e) => handleDragStart(e, task.id)} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group relative flex flex-col gap-2.5">
-                        <div className="absolute top-2.5 right-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/95 backdrop-blur-sm p-1 rounded shadow-sm border border-slate-100 z-10">
-                          <button onClick={(e) => handleOpenEditModal(task, e)} className="text-slate-400 hover:text-blue-600 p-1.5 rounded cursor-pointer" title="Edit Task"><Edit3 size={13} /></button>
-                          <button onClick={(e) => handleDeleteTask(task.id, e)} className="text-slate-400 hover:text-red-600 p-1.5 rounded cursor-pointer" title="Delete Task"><Trash2 size={13} /></button>
-                        </div>
-                        <h4 className="font-semibold text-slate-800 text-sm leading-snug pr-12">{task.title}</h4>
-                        <div className="flex items-center justify-between">
-                          <span className={`text-[10px] px-2.5 py-0.5 rounded-md font-bold tracking-wide ${task.categoryColor}`}>{task.category}</span>
-                        </div>
-                        <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-1">
-                          <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
-                            <span className="flex items-center gap-1 text-blue-600"><CheckSquare size={13} /> {task.id}</span>
+                    {columnTasks.map((task) => {
+                      const taskIdDisplay = task.taskId || task.id;
+                      return (
+                        <div key={taskIdDisplay} draggable onDragStart={(e) => handleDragStart(e, taskIdDisplay)} className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-grab active:cursor-grabbing group relative flex flex-col gap-2.5">
+                          <div className="absolute top-2.5 right-2.5 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/95 backdrop-blur-sm p-1 rounded shadow-sm border border-slate-100 z-10">
+                            <button onClick={(e) => handleOpenEditModal(task, e)} className="text-slate-400 hover:text-blue-600 p-1.5 rounded cursor-pointer" title="Edit Task"><Edit3 size={13} /></button>
+                            <button onClick={(e) => handleDeleteTask(taskIdDisplay, e)} className="text-slate-400 hover:text-red-600 p-1.5 rounded cursor-pointer" title="Delete Task"><Trash2 size={13} /></button>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {task.dueDate && (
-                              <div className={`flex items-center gap-1 text-[11px] ${task.isOverdue ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
-                                {task.isOverdue && <AlertCircle size={12} />}<span>{task.dueDate}</span>
+                          <h4 className="font-semibold text-slate-800 text-sm leading-snug pr-12">{task.title}</h4>
+                          <div className="flex items-center justify-between">
+                            <span className={`text-[10px] px-2.5 py-0.5 rounded-md font-bold tracking-wide ${task.categoryColor}`}>{task.category}</span>
+                          </div>
+                          <div className="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-1">
+                            <div className="flex items-center gap-2 text-xs text-slate-500 font-medium">
+                              <span className="flex items-center gap-1 text-blue-600"><CheckSquare size={13} /> {taskIdDisplay}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {task.dueDate && (
+                                <div className={`flex items-center gap-1 text-[11px] ${task.isOverdue ? 'text-red-500 font-semibold' : 'text-slate-400'}`}>
+                                  {task.isOverdue && <AlertCircle size={12} />}<span>{task.dueDate}</span>
+                                </div>
+                              )}
+                              <div className={`w-6 h-6 rounded-full ${task.assigneeBg || 'bg-blue-600'} text-white text-[10px] font-bold flex items-center justify-center shadow-sm`}>
+                                {task.assigneeInitials || 'AL'}
                               </div>
-                            )}
-                            <div className={`w-6 h-6 rounded-full ${task.assigneeBg || 'bg-blue-600'} text-white text-[10px] font-bold flex items-center justify-center shadow-sm`}>
-                              {task.assigneeInitials || 'AL'}
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     {columnTasks.length === 0 && <div className="h-28 flex items-center justify-center border-2 border-dashed border-slate-200 rounded-xl text-slate-400 text-xs font-medium">No tasks in this column</div>}
                   </div>
                 </div>
@@ -190,36 +209,39 @@ function ProjectContent({ project, onBack, updateTasks }) {
                   {filteredTasks.length === 0 ? (
                     <tr><td colSpan="7" className="py-10 text-center text-slate-400">No tasks found</td></tr>
                   ) : (
-                    filteredTasks.map(task => (
-                      <tr key={task.id} className="hover:bg-slate-50/80 transition-colors">
-                        <td className="py-4 px-5 font-medium text-slate-600">{task.id}</td>
-                        <td className="py-4 px-5 text-slate-900 font-medium">{task.title}</td>
-                        <td className="py-4 px-5">
-                          <span className="capitalize text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600">
-                            {task.status.replace('-', ' ')}
-                          </span>
-                        </td>
-                        <td className="py-4 px-5">
-                          <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wide whitespace-nowrap ${task.categoryColor}`}>
-                            {task.category}
-                          </span>
-                        </td>
-                        <td className={`py-4 px-5 whitespace-nowrap ${task.isOverdue ? 'text-red-500 font-semibold' : 'text-slate-500'}`}>
-                          {task.dueDate}
-                        </td>
-                        <td className="py-4 px-5">
-                          <div className={`w-7 h-7 rounded-full ${task.assigneeBg || 'bg-blue-600'} text-white text-[10px] font-bold flex items-center justify-center shadow-sm`}>
-                            {task.assigneeInitials || 'AL'}
-                          </div>
-                        </td>
-                        <td className="py-4 px-5 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button onClick={(e) => handleOpenEditModal(task, e)} className="text-slate-400 hover:text-blue-600 p-1.5 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"><Edit3 size={15} /></button>
-                            <button onClick={(e) => handleDeleteTask(task.id, e)} className="text-slate-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-md transition-colors cursor-pointer"><Trash2 size={15} /></button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                    filteredTasks.map(task => {
+                      const taskIdDisplay = task.taskId || task.id;
+                      return (
+                        <tr key={taskIdDisplay} className="hover:bg-slate-50/80 transition-colors">
+                          <td className="py-4 px-5 font-medium text-slate-600">{taskIdDisplay}</td>
+                          <td className="py-4 px-5 text-slate-900 font-medium">{task.title}</td>
+                          <td className="py-4 px-5">
+                            <span className="capitalize text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600">
+                              {task.status.replace('-', ' ')}
+                            </span>
+                          </td>
+                          <td className="py-4 px-5">
+                            <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold tracking-wide whitespace-nowrap ${task.categoryColor}`}>
+                              {task.category}
+                            </span>
+                          </td>
+                          <td className={`py-4 px-5 whitespace-nowrap ${task.isOverdue ? 'text-red-500 font-semibold' : 'text-slate-500'}`}>
+                            {task.dueDate}
+                          </td>
+                          <td className="py-4 px-5">
+                            <div className={`w-7 h-7 rounded-full ${task.assigneeBg || 'bg-blue-600'} text-white text-[10px] font-bold flex items-center justify-center shadow-sm`}>
+                              {task.assigneeInitials || 'AL'}
+                            </div>
+                          </td>
+                          <td className="py-4 px-5 text-right">
+                            <div className="flex items-center justify-end gap-1.5">
+                              <button onClick={(e) => handleOpenEditModal(task, e)} className="text-slate-400 hover:text-blue-600 p-1.5 hover:bg-blue-50 rounded-md transition-colors cursor-pointer"><Edit3 size={15} /></button>
+                              <button onClick={(e) => handleDeleteTask(taskIdDisplay, e)} className="text-slate-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded-md transition-colors cursor-pointer"><Trash2 size={15} /></button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
                   )}
                 </tbody>
               </table>
@@ -241,11 +263,12 @@ function ProjectContent({ project, onBack, updateTasks }) {
                 <div className="text-center py-12 text-slate-400 pl-4">No events on timeline.</div>
               ) : (
                 timelineTasks.map((task) => {
+                  const taskIdDisplay = task.taskId || task.id;
                   const statusConfig = columnsConfig.find(c => c.id === task.status);
                   const dotColor = statusConfig ? statusConfig.color.replace('bg-', 'border-').replace('500', '500') : 'border-slate-400';
                   
                   return (
-                    <div key={task.id} className="relative pl-6 sm:pl-8">
+                    <div key={taskIdDisplay} className="relative pl-6 sm:pl-8">
                       <div className={`absolute -left-[9px] top-1.5 w-4 h-4 rounded-full bg-white border-[3px] ${dotColor} ring-4 ring-slate-50 z-10`} />
                       
                       <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all">
@@ -256,7 +279,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
                         <h4 className="font-semibold text-slate-900 text-sm sm:text-base mb-3 leading-snug">{task.title}</h4>
                         
                         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
-                          <span className="flex items-center gap-1"><CheckSquare size={14}/> {task.id}</span>
+                          <span className="flex items-center gap-1"><CheckSquare size={14}/> {taskIdDisplay}</span>
                           <span className="flex items-center gap-1">Status: <strong className="capitalize text-slate-700">{task.status.replace('-', ' ')}</strong></span>
                           <span className="flex items-center gap-1"><User size={14} /> Assignee: <strong className="text-slate-700">{task.assigneeInitials}</strong></span>
                         </div>
@@ -517,36 +540,48 @@ function ProjectContent({ project, onBack, updateTasks }) {
 // --- 2. THE MAIN DASHBOARD COMPONENT ---
 export default function AppWorkspace() {
   const [activeProjectId, setActiveProjectId] = useState(null);
-  
-  const [projects, setProjects] = useState([
-    { id: 1, name: 'Dev Team', description: 'Main development tasks, API integration, and UI improvements.', members: 4, tasks: initialTasks, color: 'bg-amber-500' },
-    { id: 2, name: 'Marketing Campaign', description: 'Q3 social media rollout and ad creatives tracking.', members: 2, tasks: [], color: 'bg-purple-500' }
-  ]);
+  const [projects, setProjects] = useState([]);
+
+  useEffect(() => {
+    axios.get('http://localhost:8000/api/projects')
+      .then(res => {
+        const fetchedProjects = res.data.map(p => ({
+          ...p,
+          id: p._id || p.id,
+          tasks: (p.tasks || []).map(t => ({ ...t, id: t.taskId || t._id }))
+        }));
+        setProjects(fetchedProjects);
+      })
+      .catch(err => console.error('Error fetching projects:', err));
+  }, []);
 
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState('');
   const [newProjectDesc, setNewProjectDesc] = useState('');
 
-  const handleCreateProject = (e) => {
+  const handleCreateProject = async (e) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
     const colors = ['bg-blue-500', 'bg-emerald-500', 'bg-rose-500', 'bg-indigo-500'];
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    
+    try {
+      const response = await axios.post('http://localhost:8000/api/projects', {
+        name: newProjectName,
+        description: newProjectDesc || 'A newly created workspace.',
+        color: randomColor
+      });
+      const createdProj = response.data;
+      const formattedProj = { ...createdProj, id: createdProj._id || createdProj.id, tasks: createdProj.tasks || [] };
 
-    const newProject = {
-      id: Date.now(),
-      name: newProjectName,
-      description: newProjectDesc || 'A newly created workspace.',
-      members: 1,
-      tasks: [],
-      color: randomColor
-    };
-
-    setProjects([...projects, newProject]);
-    setIsProjectModalOpen(false);
-    setNewProjectName('');
-    setNewProjectDesc('');
+      setProjects([...projects, formattedProj]);
+      setIsProjectModalOpen(false);
+      setNewProjectName('');
+      setNewProjectDesc('');
+    } catch (error) {
+      console.error('Error creating project:', error);
+    }
   };
 
   const updateProjectTasks = (projectId, updater) => {
@@ -598,7 +633,7 @@ export default function AppWorkspace() {
             className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex flex-col min-h-[13rem]"
           >
             <div className="flex items-start justify-between mb-4">
-              <div className={`w-11 h-11 rounded-xl ${proj.color} text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0`}>
+              <div className={`w-11 h-11 rounded-xl ${proj.color || 'bg-blue-500'} text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0`}>
                 {proj.name.substring(0, 1).toUpperCase()}
               </div>
               <button className="text-slate-400 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:text-slate-800 p-1">
@@ -613,10 +648,10 @@ export default function AppWorkspace() {
             </p>
             <div className="flex items-center justify-between mt-5 pt-4 border-t border-slate-100">
               <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
-                <Folder size={14} /> {proj.tasks.length} Tasks
+                <Folder size={14} /> {(proj.tasks || []).length} Tasks
               </div>
               <div className="flex items-center gap-1.5 text-xs text-slate-500 bg-slate-50 px-2.5 py-1 rounded-md border border-slate-100">
-                <User size={12} /> {proj.members} Members
+                <User size={12} /> {proj.members || 1} Members
               </div>
             </div>
           </div>
