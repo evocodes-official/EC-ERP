@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid,
   Users,
@@ -24,7 +25,8 @@ import {
 } from 'lucide-react';
 import AuthModal from './AuthModal';
 
-const LandingPage = ({ onLogin, onNavigate }) => {
+const LandingPage = () => {
+  const navigate = useNavigate();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -46,7 +48,12 @@ const LandingPage = ({ onLogin, onNavigate }) => {
 
   const handleLogin = () => {
     setIsAuthOpen(false);
-    onLogin();
+    const user = {
+      name: formData.name || 'User',
+      email: formData.email || 'user@example.com',
+    };
+    localStorage.setItem('ec_erp_user', JSON.stringify(user));
+    navigate('/dashboard');
   };
 
   const handleInputChange = (e) => {
@@ -57,7 +64,6 @@ const LandingPage = ({ onLogin, onNavigate }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitted(true);
-    // Reset form after showing success message
     setTimeout(() => {
       setFormData({
         name: '',
@@ -239,7 +245,16 @@ const LandingPage = ({ onLogin, onNavigate }) => {
     }
   ];
 
-  const navLinks = ['Features', 'Pricing', 'Testimonials', 'Contact'];
+  const navLinks = ['Home', 'Features', 'Pricing', 'Testimonials', 'Contact'];
+
+  const scrollToSection = (link) => {
+    if (link === 'Home') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    } else {
+      const el = document.getElementById(link.toLowerCase());
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-gray-900 overflow-x-hidden">
@@ -262,13 +277,13 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
-                <a
+                <button
                   key={link}
-                  href={`#${link.toLowerCase()}`}
+                  onClick={() => scrollToSection(link)}
                   className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
                 >
                   {link}
-                </a>
+                </button>
               ))}
             </div>
 
@@ -302,14 +317,16 @@ const LandingPage = ({ onLogin, onNavigate }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-b border-gray-100 px-4 py-4 space-y-3">
             {navLinks.map((link) => (
-              <a
+              <button
                 key={link}
-                href={`#${link.toLowerCase()}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block text-sm font-medium text-gray-600 hover:text-blue-600 py-2 transition-colors"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollToSection(link);
+                }}
+                className="block text-left text-sm font-medium text-gray-600 hover:text-blue-600 py-2 transition-colors"
               >
                 {link}
-              </a>
+              </button>
             ))}
             <div className="flex gap-3 pt-2 border-t border-gray-100">
               <button
@@ -639,19 +656,19 @@ const LandingPage = ({ onLogin, onNavigate }) => {
         <div className="max-w-4xl mx-auto">
           <div className="relative bg-gradient-to-r from-blue-600 to-cyan-500 rounded-3xl p-10 sm:p-16 text-center overflow-hidden">
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+              <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full"></div>
+              <div className="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full"></div>
             </div>
             <div className="relative">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
                 Ready to Transform Your Business?
               </h2>
-              <p className="mt-4 text-lg text-blue-100">
+              <p className="text-blue-100 mb-8 max-w-2xl mx-auto">
                 Join 500+ companies already using EVO ERP to streamline their operations.
               </p>
               <button
                 onClick={() => openAuth('signup')}
-                className="mt-8 inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-8 py-3.5 rounded-xl text-base transition-all hover:bg-blue-50 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-8 py-3.5 rounded-xl text-base transition-all hover:bg-blue-50 shadow-lg"
               >
                 Start Your Free Trial
                 <ArrowRight size={18} />
