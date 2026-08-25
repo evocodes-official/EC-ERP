@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Building2,
   Bell,
@@ -21,6 +22,17 @@ const SettingsContent = () => {
   const [activeTab, setActiveTab] = useState('general');
   const [copied, setCopied] = useState(false);
 
+  // Form & Settings State
+  const [settings, setSettings] = useState({
+    organizationName: 'EVO Global Solutions Inc.',
+    enterpriseDomain: 'evo-erp.com',
+    supportEmail: 'support@evo-erp.com',
+    timezone: '(UTC-05:00) Eastern Time (US & Canada)',
+    defaultCurrency: 'USD ($) - US Dollar',
+    fiscalYearStart: 'January 1st',
+    apiKey: 'evo_live_89f92a41b7e0982c44',
+  });
+
   // Toggle states
   const [toggles, setToggles] = useState({
     twoFactor: true,
@@ -30,12 +42,89 @@ const SettingsContent = () => {
     apiAccess: true,
   });
 
+  // Password change state
+  const [passwords, setPasswords] = useState({
+    currentPassword: '',
+    newPassword: '',
+  });
+
+  // Fetch initial settings from backend on load
+  useEffect(() => {
+    axios.get('http://localhost:8000/api/settings')
+      .then((res) => {
+        if (res.data) {
+          setSettings({
+            organizationName: res.data.organizationName || '',
+            enterpriseDomain: res.data.enterpriseDomain || '',
+            supportEmail: res.data.supportEmail || '',
+            timezone: res.data.timezone || '',
+            defaultCurrency: res.data.defaultCurrency || '',
+            fiscalYearStart: res.data.fiscalYearStart || '',
+            apiKey: res.data.apiKey || '',
+          });
+          setToggles({
+            twoFactor: res.data.twoFactorEnforced ?? true,
+            emailNotifs: res.data.emailNotifs ?? true,
+            auditAlerts: res.data.forcePasswordChange ?? true,
+            weeklyReport: res.data.weeklyReport ?? false,
+            apiAccess: true,
+          });
+        }
+      })
+      .catch((err) => console.error('Error fetching settings:', err));
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setSettings((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handlePasswordChangeInput = (e) => {
+    const { name, value } = e.target;
+    setPasswords((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleToggle = (key) => {
     setToggles((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  // Save General & Security settings
+  const handleSaveAll = async () => {
+    try {
+      const payload = {
+        ...settings,
+        twoFactorEnforced: toggles.twoFactor,
+        emailNotifs: toggles.emailNotifs,
+        forcePasswordChange: toggles.auditAlerts,
+        weeklyReport: toggles.weeklyReport,
+      };
+
+      await axios.put('http://localhost:8000/api/settings', payload);
+      alert('Settings saved successfully!');
+    } catch (error) {
+      console.error('Error saving settings:', error);
+      alert('Failed to save settings.');
+    }
+  };
+
+  // Handle Password Update request separately
+  const handlePasswordSubmit = async () => {
+    try {
+      if (!passwords.currentPassword || !passwords.newPassword) {
+        alert('Please fill out both password fields.');
+        return;
+      }
+      await axios.post('http://localhost:8000/api/settings/password', passwords);
+      alert('Admin master password updated successfully!');
+      setPasswords({ currentPassword: '', newPassword: '' });
+    } catch (error) {
+      console.error('Error updating password:', error);
+      alert('Failed to update password.');
+    }
+  };
+
   const copyApiKey = () => {
-    navigator.clipboard.writeText('evo_live_89f92a41b7e0982c44');
+    navigator.clipboard.writeText(settings.apiKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -50,7 +139,10 @@ const SettingsContent = () => {
             Manage your organization profile, security policies, and enterprise integrations.
           </p>
         </div>
-        <button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-colors w-fit cursor-pointer">
+        <button 
+          onClick={handleSaveAll}
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-colors w-fit cursor-pointer"
+        >
           <Save size={15} />
           <span>Save Changes</span>
         </button>
@@ -113,7 +205,9 @@ const SettingsContent = () => {
                 <label className="text-xs font-semibold text-gray-700">Organization Name</label>
                 <input
                   type="text"
-                  defaultValue="EVO Global Solutions Inc."
+                  name="organizationName"
+                  value={settings.organizationName}
+                  onChange={handleInputChange}
                   className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                 />
               </div>
@@ -122,7 +216,9 @@ const SettingsContent = () => {
                 <label className="text-xs font-semibold text-gray-700">Enterprise Domain</label>
                 <input
                   type="text"
-                  defaultValue="evo-erp.com"
+                  name="enterpriseDomain"
+                  value={settings.enterpriseDomain}
+                  onChange={handleInputChange}
                   className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                 />
               </div>
@@ -131,14 +227,21 @@ const SettingsContent = () => {
                 <label className="text-xs font-semibold text-gray-700">Support Email</label>
                 <input
                   type="email"
-                  defaultValue="support@evo-erp.com"
+                  name="supportEmail"
+                  value={settings.supportEmail}
+                  onChange={handleInputChange}
                   className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white"
                 />
               </div>
 
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-gray-700">Primary Timezone</label>
-                <select className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white cursor-pointer">
+                <select 
+                  name="timezone"
+                  value={settings.timezone}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white cursor-pointer"
+                >
                   <option>(UTC-05:00) Eastern Time (US & Canada)</option>
                   <option>(UTC+00:00) London, GMT</option>
                   <option>(UTC+05:30) New Delhi, IST</option>
@@ -157,7 +260,12 @@ const SettingsContent = () => {
             <div className="space-y-4 text-xs font-medium">
               <div className="space-y-1.5">
                 <label className="font-semibold text-gray-700">Default Currency</label>
-                <select className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer">
+                <select 
+                  name="defaultCurrency"
+                  value={settings.defaultCurrency}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer"
+                >
                   <option>USD ($) - US Dollar</option>
                   <option>EUR (€) - Euro</option>
                   <option>GBP (£) - British Pound</option>
@@ -166,7 +274,12 @@ const SettingsContent = () => {
 
               <div className="space-y-1.5">
                 <label className="font-semibold text-gray-700">Fiscal Year Start</label>
-                <select className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer">
+                <select 
+                  name="fiscalYearStart"
+                  value={settings.fiscalYearStart}
+                  onChange={handleInputChange}
+                  className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer"
+                >
                   <option>January 1st</option>
                   <option>April 1st</option>
                   <option>October 1st</option>
@@ -251,15 +364,27 @@ const SettingsContent = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
                   type="password"
+                  name="currentPassword"
                   placeholder="Current Password"
+                  value={passwords.currentPassword}
+                  onChange={handlePasswordChangeInput}
                   className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs"
                 />
                 <input
                   type="password"
+                  name="newPassword"
                   placeholder="New Password"
+                  value={passwords.newPassword}
+                  onChange={handlePasswordChangeInput}
                   className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs"
                 />
               </div>
+              <button 
+                onClick={handlePasswordSubmit}
+                className="bg-gray-900 hover:bg-gray-800 text-white px-3.5 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Update Password
+              </button>
             </div>
           </div>
 
@@ -347,7 +472,7 @@ const SettingsContent = () => {
                 <input
                   type="password"
                   readOnly
-                  value="evo_live_89f92a41b7e0982c44"
+                  value={settings.apiKey}
                   className="w-full bg-white border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs font-mono text-gray-700 shadow-2xs"
                 />
                 <button
