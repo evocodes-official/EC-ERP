@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Grid,
   Users,
@@ -24,7 +25,8 @@ import {
 } from 'lucide-react';
 import AuthModal from './AuthModal';
 
-const LandingPage = ({ onLogin, onNavigate }) => {
+const LandingPage = () => {
+  const navigate = useNavigate();
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [authMode, setAuthMode] = useState('login');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -46,7 +48,12 @@ const LandingPage = ({ onLogin, onNavigate }) => {
 
   const handleLogin = () => {
     setIsAuthOpen(false);
-    onLogin();
+    const user = {
+      name: formData.name || 'User',
+      email: formData.email || 'user@example.com',
+    };
+    localStorage.setItem('ec_erp_user', JSON.stringify(user));
+    navigate('/dashboard');
   };
 
   const handleInputChange = (e) => {
@@ -57,7 +64,6 @@ const LandingPage = ({ onLogin, onNavigate }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitted(true);
-    // Reset form after showing success message
     setTimeout(() => {
       setFormData({
         name: '',
@@ -239,7 +245,16 @@ const LandingPage = ({ onLogin, onNavigate }) => {
     }
   ];
 
-  const navLinks = ['Features', 'Pricing', 'Testimonials', 'Contact'];
+  const navLinks = ['Home', 'Features', 'Pricing', 'Testimonials', 'Contact'];
+
+  const scrollToSection = (link) => {
+    if (link === 'Home') {
+      window.scrollTo({ top: 0, left: 0, behavior: 'smooth' });
+    } else {
+      const el = document.getElementById(link.toLowerCase());
+      if (el) el.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans antialiased text-gray-900 overflow-x-hidden">
@@ -262,13 +277,13 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             {/* Desktop Nav Links */}
             <div className="hidden md:flex items-center gap-8">
               {navLinks.map((link) => (
-                <a
+                <button
                   key={link}
-                  href={`#${link.toLowerCase()}`}
+                  onClick={() => scrollToSection(link)}
                   className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
                 >
                   {link}
-                </a>
+                </button>
               ))}
             </div>
 
@@ -302,14 +317,16 @@ const LandingPage = ({ onLogin, onNavigate }) => {
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-b border-gray-100 px-4 py-4 space-y-3">
             {navLinks.map((link) => (
-              <a
+              <button
                 key={link}
-                href={`#${link.toLowerCase()}`}
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="block text-sm font-medium text-gray-600 hover:text-blue-600 py-2 transition-colors"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  scrollToSection(link);
+                }}
+                className="block text-left text-sm font-medium text-gray-600 hover:text-blue-600 py-2 transition-colors"
               >
                 {link}
-              </a>
+              </button>
             ))}
             <div className="flex gap-3 pt-2 border-t border-gray-100">
               <button
@@ -639,19 +656,19 @@ const LandingPage = ({ onLogin, onNavigate }) => {
         <div className="max-w-4xl mx-auto">
           <div className="relative bg-gradient-to-r from-blue-600 to-cyan-500 rounded-3xl p-10 sm:p-16 text-center overflow-hidden">
             <div className="absolute inset-0 opacity-10">
-              <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full blur-3xl"></div>
-              <div className="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full blur-3xl"></div>
+              <div className="absolute top-0 left-0 w-40 h-40 bg-white rounded-full"></div>
+              <div className="absolute bottom-0 right-0 w-40 h-40 bg-white rounded-full"></div>
             </div>
             <div className="relative">
-              <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
                 Ready to Transform Your Business?
               </h2>
-              <p className="mt-4 text-lg text-blue-100">
+              <p className="text-blue-100 mb-8 max-w-2xl mx-auto">
                 Join 500+ companies already using EVO ERP to streamline their operations.
               </p>
               <button
                 onClick={() => openAuth('signup')}
-                className="mt-8 inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-8 py-3.5 rounded-xl text-base transition-all hover:bg-blue-50 shadow-lg hover:shadow-xl hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-8 py-3.5 rounded-xl text-base transition-all hover:bg-blue-50 shadow-lg"
               >
                 Start Your Free Trial
                 <ArrowRight size={18} />
@@ -865,10 +882,10 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-blue-400 transition-colors">Features</a></li>
-                <li><a href="#pricing" className="hover:text-blue-400 transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Integrations</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Changelog</a></li>
+                <li><button onClick={() => scrollToSection('features')} className="hover:text-blue-400 transition-colors">Features</button></li>
+                <li><button onClick={() => scrollToSection('pricing')} className="hover:text-blue-400 transition-colors">Pricing</button></li>
+                <li><button onClick={() => scrollToSection('testimonials')} className="hover:text-blue-400 transition-colors">Customers</button></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Contact</button></li>
               </ul>
             </div>
 
@@ -876,10 +893,9 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">About Us</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Blog</a></li>
-                <li><a href="#contact" className="hover:text-blue-400 transition-colors">Contact</a></li>
+                <li><button onClick={() => navigate('/terms')} className="hover:text-blue-400 transition-colors">Terms & Conditions</button></li>
+                <li><button onClick={() => navigate('/privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button></li>
+                <li><button onClick={() => navigate('/copyright')} className="hover:text-blue-400 transition-colors">Copyright</button></li>
               </ul>
             </div>
 
@@ -887,10 +903,9 @@ const LandingPage = ({ onLogin, onNavigate }) => {
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm">Support</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Help Center</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Documentation</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">API Reference</a></li>
-                <li><a href="#" className="hover:text-blue-400 transition-colors">Status</a></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Help Center</button></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Documentation</button></li>
+                <li><button onClick={() => scrollToSection('contact')} className="hover:text-blue-400 transition-colors">Contact Support</button></li>
               </ul>
             </div>
           </div>
@@ -898,9 +913,9 @@ const LandingPage = ({ onLogin, onNavigate }) => {
           <div className="mt-12 pt-8 border-t border-gray-800 flex flex-col sm:flex-row items-center justify-between gap-4">
             <p className="text-xs">© 2026 EvoCodes. All rights reserved.</p>
             <div className="flex gap-6 text-xs">
-              <button onClick={() => onNavigate('privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button>
-              <button onClick={() => onNavigate('terms')} className="hover:text-blue-400 transition-colors">Terms & Conditions</button>
-              <button onClick={() => onNavigate('copyright')} className="hover:text-blue-400 transition-colors">Copyright</button>
+              <button onClick={() => navigate('/privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button>
+              <button onClick={() => navigate('/terms')} className="hover:text-blue-400 transition-colors">Terms & Conditions</button>
+              <button onClick={() => navigate('/copyright')} className="hover:text-blue-400 transition-colors">Copyright</button>
             </div>
           </div>
         </div>
