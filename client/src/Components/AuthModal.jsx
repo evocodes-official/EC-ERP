@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Building2, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import api from './api';
 
 const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
   const [mode, setMode] = useState(initialMode);
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -14,14 +17,31 @@ const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Store the signed-in user session and navigate to the ERP dashboard
-    localStorage.setItem(
-      'ec_erp_user',
-      JSON.stringify({ name: formData.name || 'User', email: formData.email })
-    );
-    onLogin();
+    setError('');
+    setLoading(true);
+
+    try {
+      const endpoint = mode === 'login' ? '/auth/login' : '/auth/register';
+      const payload = {
+        email: formData.email,
+        password: formData.password,
+        ...(mode === 'signup' ? { name: formData.name, company: formData.company } : {}),
+      };
+
+      const response = await api.post(endpoint, payload);
+      const { token, user } = response.data;
+
+      localStorage.setItem('ec_erp_token', token);
+      localStorage.setItem('ec_erp_user', JSON.stringify(user));
+
+      onLogin();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const switchMode = (newMode) => {
@@ -90,6 +110,11 @@ const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
+          {error && (
+            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium px-3 py-2 rounded-lg">
+              {error}
+            </div>
+          )}
           {mode === 'signup' && (
             <>
               <div>
@@ -192,10 +217,11 @@ const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm transition-all shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0"
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg text-sm transition-all shadow-md shadow-blue-500/20 hover:shadow-lg hover:shadow-blue-500/30 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-70 disabled:cursor-not-allowed"
           >
-            {mode === 'login' ? 'Sign In' : 'Create Account'}
-            <ArrowRight size={16} />
+            {loading ? 'Please wait...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
+            {!loading && <ArrowRight size={16} />}
           </button>
 
           {/* Divider */}
