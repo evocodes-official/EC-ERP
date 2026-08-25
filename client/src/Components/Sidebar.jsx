@@ -136,7 +136,14 @@ export default function Sidebar({ activeTab, setActiveTab, setIsSidebarOpen }) {
 
         {/* Sidebar Footer */}
         <div className="p-3 border-t border-slate-100 space-y-1">
-          <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-slate-600 hover:text-slate-900 font-medium rounded-lg hover:bg-slate-50 transition-colors">
+          <button
+            onClick={() => setActiveTab('profile')}
+            className={`w-full flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+              activeTab === 'profile'
+                ? 'text-blue-600 bg-blue-50 font-semibold'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+            }`}
+          >
             <User className="w-4 h-4" /> Profile
           </button>
           <button
