@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search,
   Bell,
@@ -17,13 +17,25 @@ import {
   Mail,
   Calendar,
   User,
-  Menu // <-- Added Menu icon
+  Menu,
+  LayoutDashboard,
+  Package,
+  BarChart3,
+  Settings,
+  BellRing,
+  CheckCircle2,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 
-const Navbar = ({ setActiveTab, onMenuClick }) => { // <-- Added onMenuClick prop
+const Navbar = ({ setActiveTab, onMenuClick }) => {
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
   const [selectedModule, setSelectedModule] = useState(null);
   const [formData, setFormData] = useState({});
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const [isGridTrayOpen, setIsGridTrayOpen] = useState(false);
+  const notificationRef = useRef(null);
+  const gridTrayRef = useRef(null);
 
   const modules = [
     {
@@ -74,6 +86,37 @@ const Navbar = ({ setActiveTab, onMenuClick }) => { // <-- Added onMenuClick pro
     setActiveTab(selectedModule.id);
     closeAllModals();
   };
+
+  const notifications = [
+    { id: 1, type: 'info', title: 'New employee onboarded', message: 'Sarah Johnson joined Engineering', time: '2 min ago', icon: Info, iconColor: 'text-blue-600', bgColor: 'bg-blue-50' },
+    { id: 2, type: 'success', title: 'Invoice paid', message: 'Invoice #INV-2024-001 from Acme Corp', time: '15 min ago', icon: CheckCircle2, iconColor: 'text-emerald-600', bgColor: 'bg-emerald-50' },
+    { id: 3, type: 'warning', title: 'Task deadline approaching', message: 'Project Alpha due in 2 days', time: '1 hour ago', icon: AlertTriangle, iconColor: 'text-amber-600', bgColor: 'bg-amber-50' },
+    { id: 4, type: 'info', title: 'New lead captured', message: 'Potential client from LinkedIn campaign', time: '3 hours ago', icon: BellRing, iconColor: 'text-purple-600', bgColor: 'bg-purple-50' },
+  ];
+
+  const gridNavItems = [
+    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
+    { id: 'hr', name: 'HR', icon: Users },
+    { id: 'crm', name: 'CRM', icon: Briefcase },
+    { id: 'finance', name: 'Finance', icon: Wallet },
+    { id: 'projects', name: 'Projects', icon: FolderKanban },
+    { id: 'inventories', name: 'Inventories', icon: Package },
+    { id: 'reports', name: 'Reports', icon: BarChart3 },
+    { id: 'settings', name: 'Settings', icon: Settings },
+  ];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationRef.current && !notificationRef.current.contains(event.target)) {
+        setIsNotificationOpen(false);
+      }
+      if (gridTrayRef.current && !gridTrayRef.current.contains(event.target)) {
+        setIsGridTrayOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const renderModuleForm = () => {
     if (!selectedModule) return null;
@@ -287,14 +330,100 @@ const Navbar = ({ setActiveTab, onMenuClick }) => { // <-- Added onMenuClick pro
           <Plus size={16} />
         </button>
 
-        <button className="relative text-gray-500 hover:bg-gray-100 p-1.5 rounded-full transition-colors">
+        <button
+          onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+          className="relative text-gray-500 hover:bg-gray-100 p-1.5 rounded-full transition-colors"
+        >
           <Bell size={18} />
           <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
         </button>
 
-        <button className="hidden min-[350px]:block text-gray-500 hover:bg-gray-100 p-1.5 rounded-full transition-colors">
+        {/* NOTIFICATION TRAY */}
+        {isNotificationOpen && (
+          <div className="fixed inset-0 z-40" onClick={() => setIsNotificationOpen(false)}>
+            <div 
+              ref={notificationRef}
+              className="absolute right-4 top-14 w-80 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                <h3 className="font-bold text-gray-900 text-sm">Notifications</h3>
+                <span className="text-xs text-gray-500 font-medium">{notifications.length} new</span>
+              </div>
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.map((notification) => {
+                  const Icon = notification.icon;
+                  return (
+                    <div key={notification.id} className="p-3 hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-b-0">
+                      <div className="flex gap-3">
+                        <div className={`p-2 rounded-lg ${notification.bgColor} ${notification.iconColor} shrink-0`}>
+                          <Icon size={14} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 truncate">{notification.title}</p>
+                          <p className="text-xs text-gray-500 mt-0.5 truncate">{notification.message}</p>
+                          <p className="text-xs text-gray-400 mt-1">{notification.time}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="p-3 border-t border-gray-100 bg-gray-50">
+                <button className="w-full text-center text-xs font-semibold text-blue-600 hover:text-blue-700 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
+                  View all notifications
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <button 
+          onClick={() => { setIsGridTrayOpen(!isGridTrayOpen); setIsNotificationOpen(false); }}
+          className="hidden min-[350px]:block text-gray-500 hover:bg-gray-100 p-1.5 rounded-full transition-colors"
+        >
           <Grid size={18} />
         </button>
+
+        {/* GRID / APPS TRAY */}
+        {isGridTrayOpen && (
+          <div className="fixed inset-0 z-40" onClick={() => setIsGridTrayOpen(false)}>
+            <div 
+              ref={gridTrayRef}
+              className="absolute right-4 top-14 w-72 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 border-b border-gray-100">
+                <h3 className="font-bold text-gray-900 text-sm">Quick Access</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Navigate to any module</p>
+              </div>
+              <div className="p-3">
+                <div className="grid grid-cols-2 gap-2">
+                  {gridNavItems.map((item) => {
+                    const Icon = item.icon;
+                    const isActive = false;
+                    return (
+                      <button
+                        key={item.id}
+                        onClick={() => { setActiveTab(item.id); setIsGridTrayOpen(false); }}
+                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                          isActive
+                            ? 'bg-blue-50 border-blue-200'
+                            : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                        }`}
+                      >
+                        <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-50 text-gray-600'}`}>
+                          <Icon size={16} />
+                        </div>
+                        <span className="text-sm font-medium text-gray-900">{item.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="pl-1 sm:pl-2 border-l border-gray-200 flex items-center">
           <img
