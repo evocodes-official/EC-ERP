@@ -584,6 +584,16 @@ export default function AppWorkspace() {
     }
   };
 
+  const handleDeleteProject = async (projectId, e) => {
+    e.stopPropagation();
+    try {
+      await axios.delete(`http://localhost:8000/api/projects/${projectId}`);
+      setProjects(prev => prev.filter(p => p.id !== projectId));
+    } catch (error) {
+      console.error('Error deleting project:', error);
+    }
+  };
+
   const updateProjectTasks = (projectId, updater) => {
     setProjects(prevProjects => prevProjects.map(p => {
       if (p.id === projectId) {
@@ -630,14 +640,18 @@ export default function AppWorkspace() {
           <div 
             key={proj.id}
             onClick={() => setActiveProjectId(proj.id)}
-            className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex flex-col min-h-[13rem]"
+            className="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer group flex flex-col min-h-[13rem] relative"
           >
             <div className="flex items-start justify-between mb-4">
               <div className={`w-11 h-11 rounded-xl ${proj.color || 'bg-blue-500'} text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0`}>
                 {proj.name.substring(0, 1).toUpperCase()}
               </div>
-              <button className="text-slate-400 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity hover:text-slate-800 p-1">
-                <MoreHorizontal size={18} />
+              <button 
+                onClick={(e) => handleDeleteProject(proj.id, e)}
+                className="text-slate-400 opacity-100    hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
+                title="Delete Project"
+              >
+                <Trash2 size={18} />
               </button>
             </div>
             <h3 className="font-bold text-lg text-slate-900 group-hover:text-blue-600 transition-colors truncate">
