@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Camera,
   Mail,
@@ -30,6 +30,30 @@ import {
   LogOut,
   ChevronRight,
 } from 'lucide-react';
+import api from './api';
+
+// Fallback profile used when the API is unreachable or returns no data
+const DEFAULT_PROFILE = {
+  name: 'Arjun Mehta',
+  email: 'arjun.mehta@evocodes.com',
+  picture:
+    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
+  role: 'Operations Director',
+  department: 'Enterprise Suite',
+  location: 'Chennai, Tamil Nadu, India',
+  phone: '+91 98765 43210',
+  company: 'EvoCodes Pvt. Ltd.',
+  joined: 'January 2022',
+  bio: 'Product-minded operations leader who loves turning complex workflows into simple, elegant systems. Focused on scaling enterprise teams with data-driven decisions.',
+  skills: [
+    { name: 'ERP Strategy', level: 92, color: 'bg-blue-600' },
+    { name: 'Process Automation', level: 84, color: 'bg-emerald-500' },
+    { name: 'Data Analytics', level: 90, color: 'bg-violet-500' },
+    { name: 'Team Leadership', level: 88, color: 'bg-amber-500' },
+    { name: 'Vendor Management', level: 76, color: 'bg-cyan-500' },
+  ],
+  languages: ['English (Fluent)', 'Tamil (Native)', 'Hindi (Conversational)'],
+};
 
 const ProfileContent = () => {
   // Load the signed-in user (stored on login) or fall back to a demo profile
@@ -49,25 +73,58 @@ const ProfileContent = () => {
   const stored = getStoredUser();
 
   const [user, setUser] = useState({
-    name: stored?.name || 'Arjun Mehta',
-    email: stored?.email || 'arjun.mehta@evocodes.com',
-    picture:
-      stored?.picture ||
-      'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&auto=format&fit=crop&q=80',
-    role: 'Operations Director',
-    department: 'Enterprise Suite',
-    location: 'Chennai, Tamil Nadu, India',
-    phone: '+91 98765 43210',
-    company: 'EvoCodes Pvt. Ltd.',
-    joined: 'January 2022',
-    bio: 'Product-minded operations leader who loves turning complex workflows into simple, elegant systems. Focused on scaling enterprise teams with data-driven decisions.',
+    name: stored?.name || DEFAULT_PROFILE.name,
+    email: stored?.email || DEFAULT_PROFILE.email,
+    picture: stored?.picture || DEFAULT_PROFILE.picture,
+    role: DEFAULT_PROFILE.role,
+    department: DEFAULT_PROFILE.department,
+    location: DEFAULT_PROFILE.location,
+    phone: DEFAULT_PROFILE.phone,
+    company: DEFAULT_PROFILE.company,
+    joined: DEFAULT_PROFILE.joined,
+    bio: DEFAULT_PROFILE.bio,
   });
 
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState({ ...user });
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState('');
   const fileInputRef = useRef(null);
+
+  const [skills, setSkills] = useState(DEFAULT_PROFILE.skills);
+  const [languages, setLanguages] = useState(DEFAULT_PROFILE.languages);
+
+  // Fetch the profile from the API (GET /api/profile?email=...)
+  // Falls back to the server's default profile when no email is known.
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchProfile = async () => {
+      try {
+        const config = stored?.email ? { params: { email: stored.email } } : {};
+        const res = await api.get('/profile', config);
+        const data = res.data?.data;
+
+        if (isMounted && data) {
+          const { skills: fetchedSkills, languages: fetchedLanguages, ...profileFields } = data;
+          setUser((prev) => ({ ...prev, ...profileFields }));
+          if (Array.isArray(fetchedSkills) && fetchedSkills.length) setSkills(fetchedSkills);
+          if (Array.isArray(fetchedLanguages) && fetchedLanguages.length) setLanguages(fetchedLanguages);
+        }
+      } catch (err) {
+        // Keep local fallback data when the API is unavailable
+        console.error('Failed to load profile:', err?.response?.data || err.message);
+      }
+    };
+
+    fetchProfile();
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Security / notification toggles
   const [toggles, setToggles] = useState({
@@ -104,11 +161,63 @@ const ProfileContent = () => {
     setIsEditing(false);
   };
 
-  const handleSave = () => {
-    setUser({ ...form, picture: avatarPreview || form.picture });
-    setIsEditing(false);
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  const handleSave = async () => {
+    const updated = { ...form, picture: avatarPreview || form.picture };
+
+    // Email is the identifier required by the backend (PUT /api/profile)
+    if (!updated.email) {
+      setSaveError('Email is required to save your profile');
+      setTimeout(() => setSaveError(''), 3000);
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const payload = {
+        name: updated.name,
+        email: updated.email,
+        picture: updated.picture,
+        role: updated.role,
+        department: updated.department,
+        location: updated.location,
+        phone: updated.phone,
+        company: updated.company,
+        joined: updated.joined,
+        bio: updated.bio,
+        skills,
+        languages,
+      };
+
+      const res = await api.put('/profile', payload);
+      const data = res.data?.data;
+
+      // Sync UI with the saved document from the server
+      const { skills: savedSkills, languages: savedLanguages, ...profileFields } = data || payload;
+      setUser((prev) => ({ ...prev, ...profileFields }));
+      if (Array.isArray(savedSkills) && savedSkills.length) setSkills(savedSkills);
+      if (Array.isArray(savedLanguages) && savedLanguages.length) setLanguages(savedLanguages);
+
+      // Keep the stored session user (name/email/picture) in sync
+      try {
+        const raw = localStorage.getItem('ec_erp_user');
+        const storedUser = raw ? JSON.parse(raw) : {};
+        localStorage.setItem(
+          'ec_erp_user',
+          JSON.stringify({ ...storedUser, name: profileFields.name, email: profileFields.email, picture: profileFields.picture })
+        );
+      } catch {
+        // ignore malformed storage
+      }
+
+      setIsEditing(false);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
+    } catch (err) {
+      setSaveError(err?.response?.data?.message || 'Failed to save profile');
+      setTimeout(() => setSaveError(''), 3000);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const fieldClass =
@@ -121,14 +230,6 @@ const ProfileContent = () => {
     { icon: Award, color: 'text-amber-600 bg-amber-50', label: 'Years Experience', value: '6' },
     { icon: Star, color: 'text-purple-600 bg-purple-50', label: 'Performance Rating', value: '4.9' },
   ];
-
-    const [skills, setSkills] = useState([
-    { name: 'ERP Strategy', level: 92, color: 'bg-blue-600' },
-    { name: 'Process Automation', level: 84, color: 'bg-emerald-500' },
-    { name: 'Data Analytics', level: 90, color: 'bg-violet-500' },
-    { name: 'Team Leadership', level: 88, color: 'bg-amber-500' },
-    { name: 'Vendor Management', level: 76, color: 'bg-cyan-500' },
-  ]);
 
   const achievements = [
     { icon: Award, label: 'Top Performer 2025', color: 'bg-amber-50 text-amber-600 border-amber-100' },
@@ -150,7 +251,6 @@ const ProfileContent = () => {
     { device: 'iPhone 15 Pro', detail: 'iOS 18 · Safari · Last active 3h ago', current: false },
   ];
 
-    const [languages, setLanguages] = useState(['English (Fluent)', 'Tamil (Native)', 'Hindi (Conversational)']);
 return (
     <div className="space-y-6 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-16">
       {/* Page Title */}
@@ -246,9 +346,10 @@ return (
                 <div className="flex items-center gap-2">
                   <button
                     onClick={handleSave}
-                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-blue-500/30 transition-all cursor-pointer"
+                    disabled={saving}
+                    className={`flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-blue-500/30 transition-all cursor-pointer ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
-                    <Save size={14} /> <span>Save</span>
+                    <Save size={14} /> <span>{saving ? 'Saving...' : 'Save'}</span>
                   </button>
                   <button
                     onClick={cancelEdit}
@@ -643,6 +744,14 @@ return (
           <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg shadow-emerald-600/30">
             <CheckCircle2 size={15} />
             <span>Profile updated successfully!</span>
+          </div>
+        )}
+
+        {/* Save error toast */}
+        {saveError && (
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-rose-600 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg shadow-rose-600/30">
+            <X size={15} />
+            <span>{saveError}</span>
           </div>
         )}
       </div>
