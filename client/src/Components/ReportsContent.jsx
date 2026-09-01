@@ -1,5 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Share, Download, ChevronDown, TrendingUp } from 'lucide-react';
+import api from './api';
+
+// Compact currency formatting (INR, Indian numbering): 24000000 -> ₹2.4Cr, 450000 -> ₹4.5L
+const formatCompactCurrency = (value) => {
+  const n = Number(value) || 0;
+  if (Math.abs(n) >= 10000000) {
+    return `₹${(n / 10000000).toFixed(2).replace(/\.00$/, '')}Cr`;
+  }
+  if (Math.abs(n) >= 100000) {
+    return `₹${(n / 100000).toFixed(2).replace(/\.00$/, '')}L`;
+  }
+  if (Math.abs(n) >= 1000) {
+    return `₹${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
+  }
+  return `₹${n.toLocaleString('en-IN')}`;
+};
 
 const ReportsContent = () => {
   // State for date range selection
@@ -7,6 +23,39 @@ const ReportsContent = () => {
   
   // State for parameters
   const [parameter, setParameter] = useState('Cost vs Performance');
+
+  // Live finance stats (GET /api/finance/stats) — demo fallback when unreachable
+  const [financeStats, setFinanceStats] = useState({
+    revenue: 428950,
+    expenses: 182340.5,
+    netProfit: 246609.5,
+    netProfitMargin: '57.5%',
+    outstanding: 23980,
+  });
+  const [isLiveStats, setIsLiveStats] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchFinanceStats = async () => {
+      try {
+        const res = await api.get('/finance/stats');
+        if (isMounted && res.data?.success && res.data?.data) {
+          setFinanceStats(res.data.data);
+          setIsLiveStats(true);
+        }
+      } catch (err) {
+        // Keep sample data visible when the API is unavailable
+        if (isMounted) setIsLiveStats(false);
+        console.error('Failed to load finance stats:', err?.response?.data || err.message);
+      }
+    };
+
+    fetchFinanceStats();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Dummy data for example purposes
   const departments = [
@@ -77,10 +126,34 @@ const ReportsContent = () => {
           
           {/* Card 1: Monthly Revenue Growth */}
           <article className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
-            <header className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">Monthly Revenue Growth</h3>
+            <header className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-bold">Monthly Revenue Growth</h3>
+                {/* Live figures from /finance/stats */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
+                  <span className="font-semibold text-gray-900">
+                    Revenue: {formatCompactCurrency(financeStats.revenue)}
+                  </span>
+                  <span className="font-semibold text-rose-600">
+                    Expenses: {formatCompactCurrency(financeStats.expenses)}
+                  </span>
+                  <span className="font-semibold text-emerald-600">
+                    Net Profit: {formatCompactCurrency(financeStats.netProfit)}{' '}
+                    {financeStats.netProfitMargin ? `(${financeStats.netProfitMargin})` : ''}
+                  </span>
+                  <span className="font-semibold text-amber-600">
+                    Outstanding: {formatCompactCurrency(financeStats.outstanding)}
+                  </span>
+                  {isLiveStats && (
+                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      Live
+                    </span>
+                  )}
+                </div>
+              </div>
               {/* Badge for growth */}
-              <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full">
+              <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full shrink-0">
                 <TrendingUp className="w-3.5 h-3.5" />
                 +12.4%
               </div>

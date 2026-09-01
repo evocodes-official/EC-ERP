@@ -135,7 +135,7 @@ const faqs = [
     questions: [
       {
         q: 'How do I track invoice statuses?',
-        a: 'The Finance module displays all invoices with their status (Paid, Pending, Overdue). Use the tab navigation to switch between Invoices, Expenses, and Payments views. The KPI cards at the top show revenue, expenses, net profit, and tax overview.',
+        a: 'The Finance module displays all invoices with their status (Paid, Pending, Overdue). Use the tab navigation to switch between Invoices, Expenses, and Payments views. The KPI cards at the top show revenue, expenses, net profit, and total payments received (in INR).',
       },
       {
         q: 'How do I export financial reports?',

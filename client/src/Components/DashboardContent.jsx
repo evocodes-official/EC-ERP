@@ -25,16 +25,19 @@ const ACTIVITY_ICONS = {
 };
 const FALLBACK_ACTIVITY_ICON = { Icon: ShieldCheck, classes: 'bg-purple-100 text-purple-600' };
 
-/** Compact currency formatting: 2400000 -> $2.4M, 450000 -> $450k */
+/** Compact currency formatting (INR, Indian numbering): 24000000 -> ₹2.4Cr, 450000 -> ₹4.5L */
 const formatCompactCurrency = (value) => {
   const n = Number(value) || 0;
-  if (Math.abs(n) >= 1000000) {
-    return `$${(n / 1000000).toFixed(1).replace(/\.0$/, '')}M`;
+  if (Math.abs(n) >= 10000000) {
+    return `₹${(n / 10000000).toFixed(2).replace(/\.00$/, '')}Cr`;
+  }
+  if (Math.abs(n) >= 100000) {
+    return `₹${(n / 100000).toFixed(2).replace(/\.00$/, '')}L`;
   }
   if (Math.abs(n) >= 1000) {
-    return `$${Math.round(n / 1000)}k`;
+    return `₹${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
   }
-  return `$${n.toLocaleString()}`;
+  return `₹${n.toLocaleString('en-IN')}`;
 };
 
 // Demo fallback used until the API responds (or if the API is unreachable)
