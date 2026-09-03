@@ -118,6 +118,38 @@ const DashboardContent = ({ onNavigate }) => {
     };
   }, []);
 
+  // Fetch top 3 employees from the HR backend (GET /api/employees)
+  // and use them for the bottom "Management Hierarchy" section
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchTopEmployees = async () => {
+      try {
+        const res = await api.get('/employees');
+        if (isMounted && res.data?.success && Array.isArray(res.data.data) && res.data.data.length > 0) {
+          const topThree = [...res.data.data]
+            .sort((a, b) => (Number(b.performance) || 0) - (Number(a.performance) || 0))
+            .slice(0, 3)
+            .map((emp) => ({
+              name: emp.name,
+              role: emp.role,
+              avatar: emp.avatar || '',
+              status: emp.attendance === 'O.O.O' ? 'away' : 'active',
+            }));
+          setData((prev) => ({ ...prev, managementHierarchy: topThree }));
+        }
+      } catch (err) {
+        // Keep the demo hierarchy when the API is unavailable
+        console.error('Failed to load top employees:', err?.response?.data || err.message);
+      }
+    };
+
+    fetchTopEmployees();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   const { kpis, revenueVsExpenses, salesByDepartment, managementHierarchy, recentActivity } = data;
 
   const kpiCards = [

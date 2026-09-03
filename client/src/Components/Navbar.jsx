@@ -27,6 +27,7 @@ import {
   AlertTriangle,
   Info
 } from 'lucide-react';
+import api from './api';
 
 const Navbar = ({ setActiveTab, onMenuClick }) => {
   const [isModuleModalOpen, setIsModuleModalOpen] = useState(false);
@@ -81,8 +82,26 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Persist HR submissions (POST /api/employees)
+    if (selectedModule.id === 'hr') {
+      try {
+        await api.post('/employees', {
+          name: formData.name,
+          email: formData.email,
+          dept: formData.dept || 'Engineering',
+          role: formData.role,
+          attendance: formData.attendance || 'On-site',
+        });
+      } catch (err) {
+        console.error('Failed to create employee:', err?.response?.data || err.message);
+        alert(err?.response?.data?.message || 'Failed to create employee. Please try again.');
+        return;
+      }
+    }
+
     setActiveTab(selectedModule.id);
     closeAllModals();
   };

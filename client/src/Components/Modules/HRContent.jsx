@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
+import api from '../api';
 import {
   CheckCircle2,
   Clock,
@@ -27,56 +28,28 @@ import {
   Plus,
   ArrowUpDown,
   CalendarDays,
+  Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 
-const HRContent = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [deptFilter, setDeptFilter] = useState('All Departments');
-  const [attendanceFilter, setAttendanceFilter] = useState('All Attendance');
-  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
-  const [showAttendanceDropdown, setShowAttendanceDropdown] = useState(false);
-  const [sortOrder, setSortOrder] = useState('newest');
-  const [showSortDropdown, setShowSortDropdown] = useState(false);
+const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80';
 
-  // Selection States
-  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
-
-  // Pagination States
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
-
-  // Modal States
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-  const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-  // Form States
-  const [formName, setFormName] = useState('');
-  const [formEmail, setFormEmail] = useState('');
-  const [formDept, setFormDept] = useState('Engineering');
-  const [formRole, setFormRole] = useState('');
-  const [formAttendance, setFormAttendance] = useState('On-site');
-  const [formAvatar, setFormAvatar] = useState(null);
-  const [formAvatarPreview, setFormAvatarPreview] = useState('');
-  const fileInputRef = useRef(null);
-
-  const [employees, setEmployees] = useState([
-    {
-      id: 1,
-      name: 'Elena Rodriguez',
-      email: 'elena.r@evo-erp.com',
-      avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
-      dept: 'Engineering',
-      deptStyle: 'bg-blue-50 text-blue-600',
-      role: 'Sr. Full-stack Lead',
-      attendance: 'On-site',
-      attendanceDot: 'bg-emerald-500',
-      performance: 92,
-      perfColor: 'bg-emerald-500',
-      joinedDate: '2024-03-15',
-    },
+// Demo fallback used until the API responds (or if the API is unreachable)
+const DEMO_EMPLOYEES = [
+  {
+    id: 1,
+    name: 'Elena Rodriguez',
+    email: 'elena.r@evo-erp.com',
+    avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=100&auto=format&fit=crop&q=80',
+    dept: 'Engineering',
+    deptStyle: 'bg-blue-50 text-blue-600',
+    role: 'Sr. Full-stack Lead',
+    attendance: 'On-site',
+    attendanceDot: 'bg-emerald-500',
+    performance: 92,
+    perfColor: 'bg-emerald-500',
+    joinedDate: '2024-03-15',
+  },
     {
       id: 2,
       name: 'James Chen',
@@ -119,7 +92,96 @@ const HRContent = () => {
       perfColor: 'bg-emerald-500',
       joinedDate: '2025-01-20',
     },
-  ]);
+];
+
+const HRContent = () => {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [deptFilter, setDeptFilter] = useState('All Departments');
+  const [attendanceFilter, setAttendanceFilter] = useState('All Attendance');
+  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
+  const [showAttendanceDropdown, setShowAttendanceDropdown] = useState(false);
+  const [sortOrder, setSortOrder] = useState('newest');
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+
+  // Selection States
+  const [selectedEmployeeIds, setSelectedEmployeeIds] = useState([]);
+
+  // Pagination States
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Modal States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editingEmployeeId, setEditingEmployeeId] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+
+  // Form States
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formDept, setFormDept] = useState('Engineering');
+  const [formRole, setFormRole] = useState('');
+  const [formAttendance, setFormAttendance] = useState('On-site');
+  const [formPerformance, setFormPerformance] = useState(85);
+  const [formAvatar, setFormAvatar] = useState(null);
+  const [formAvatarPreview, setFormAvatarPreview] = useState('');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef(null);
+
+  // API States
+  const [employees, setEmployees] = useState(DEMO_EMPLOYEES);
+  const [isLoadingEmployees, setIsLoadingEmployees] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [fetchError, setFetchError] = useState('');
+
+  // Map a backend employee document to the shape the UI expects (backend `_id` -> `id`)
+  const mapEmployee = (emp) => ({
+    ...emp,
+    id: emp._id || emp.id,
+    avatar: emp.avatar || DEFAULT_AVATAR,
+    deptStyle: emp.deptStyle || getDeptStyle(emp.dept),
+    attendanceDot: emp.attendanceDot || getAttendanceDot(emp.attendance),
+    performance: emp.performance ?? 0,
+    perfColor:
+      emp.perfColor ||
+      ((emp.performance ?? 0) >= 90
+        ? 'bg-emerald-500'
+        : (emp.performance ?? 0) >= 75
+        ? 'bg-blue-600'
+        : 'bg-slate-400'),
+  });
+
+  // Fetch employees from the HR backend (GET /api/employees)
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchEmployees = async () => {
+      try {
+        const res = await api.get('/employees');
+        if (isMounted && res.data?.success && Array.isArray(res.data.data)) {
+          setEmployees(res.data.data.map(mapEmployee));
+          setFetchError('');
+        }
+      } catch (err) {
+        // Keep demo data visible when the API is unavailable
+        if (isMounted) {
+          setFetchError('Live data unavailable — showing sample employees.');
+          console.error('Failed to load employees:', err?.response?.data || err.message);
+        }
+      } finally {
+        if (isMounted) setIsLoadingEmployees(false);
+      }
+    };
+
+    fetchEmployees();
+    return () => {
+      isMounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Department style mapping
   const getDeptStyle = (dept) => {
@@ -197,11 +259,6 @@ const HRContent = () => {
     );
   };
 
-  const handleBulkDelete = () => {
-    setEmployees(prev => prev.filter(emp => !selectedEmployeeIds.includes(emp.id)));
-    setSelectedEmployeeIds([]);
-  };
-
   // Format joined date for display
   const formatJoinedDate = (dateStr) => {
     if (!dateStr) return 'N/A';
@@ -236,8 +293,10 @@ const HRContent = () => {
     setFormDept('Engineering');
     setFormRole('');
     setFormAttendance('On-site');
+    setFormPerformance(85);
     setFormAvatar(null);
     setFormAvatarPreview('');
+    setFormError('');
     setIsModalOpen(true);
   };
 
@@ -260,8 +319,10 @@ const HRContent = () => {
     setFormDept(emp.dept);
     setFormRole(emp.role);
     setFormAttendance(emp.attendance);
+    setFormPerformance(emp.performance ?? 0);
     setFormAvatar(null);
-    setFormAvatarPreview(emp.avatar);
+    setFormAvatarPreview(emp.avatar || '');
+    setFormError('');
     setIsModalOpen(true);
   };
 
@@ -271,71 +332,138 @@ const HRContent = () => {
     setIsDetailsModalOpen(true);
   };
 
-  // Handle avatar file upload
+  // Handle avatar file upload — uploads the file to the server (POST /api/upload)
+  // and stores the returned URL, instead of embedding base64 in the JSON payload
+  // (which causes 413 "Payload Too Large" errors)
   const handleAvatarUpload = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setFormAvatar(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormAvatarPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+
+    setFormAvatar(file);
+    setIsUploadingAvatar(true);
+    setFormError('');
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    api
+      .post('/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then((res) => {
+        if (res.data?.url) {
+          setFormAvatarPreview(res.data.url);
+        } else {
+          setFormError('Image upload failed. Please try again.');
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to upload avatar:', err?.response?.data || err.message);
+        setFormError(err?.response?.data?.message || 'Image upload failed. Please try again.');
+      })
+      .finally(() => setIsUploadingAvatar(false));
   };
 
-  // Save employee (create or edit)
-  const handleSaveEmployee = (e) => {
+  // Save employee (create or edit) — persisted to the backend
+  const handleSaveEmployee = async (e) => {
     e.preventDefault();
     if (!formName.trim() || !formEmail.trim() || !formRole.trim()) return;
 
-    if (isEditMode && editingEmployeeId) {
-      setEmployees(prev => prev.map(emp => {
-        if (emp.id === editingEmployeeId) {
-          return {
-            ...emp,
-            name: formName,
-            email: formEmail,
-            dept: formDept,
-            deptStyle: getDeptStyle(formDept),
-            role: formRole,
-            attendance: formAttendance,
-            attendanceDot: getAttendanceDot(formAttendance),
-            avatar: formAvatarPreview || emp.avatar,
-          };
-        }
-        return emp;
-      }));
-    } else {
-      const newEmployee = {
-        id: employees.length > 0 ? Math.max(...employees.map(e => e.id)) + 1 : 1,
-        name: formName,
-        email: formEmail,
-        avatar: formAvatarPreview || 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&auto=format&fit=crop&q=80',
-        dept: formDept,
-        deptStyle: getDeptStyle(formDept),
-        role: formRole,
-        attendance: formAttendance,
-        attendanceDot: getAttendanceDot(formAttendance),
-        performance: 85,
-        perfColor: 'bg-emerald-500',
-        joinedDate: new Date().toISOString().split('T')[0],
-      };
-      setEmployees(prev => [...prev, newEmployee]);
-    }
+    setIsSaving(true);
+    setFormError('');
 
-    setIsModalOpen(false);
+    const payload = {
+      name: formName.trim(),
+      email: formEmail.trim(),
+      dept: formDept,
+      role: formRole.trim(),
+      attendance: formAttendance,
+      performance: Number(formPerformance) || 0,
+      avatar: formAvatarPreview || '',
+    };
+
+    try {
+      if (isEditMode && editingEmployeeId) {
+        const res = await api.put(`/employees/${editingEmployeeId}`, payload);
+        if (res.data?.success && res.data?.data) {
+          const updated = mapEmployee(res.data.data);
+          setEmployees(prev => prev.map(emp => (emp.id === editingEmployeeId ? updated : emp)));
+          setSelectedEmployee(prev => (prev && prev.id === editingEmployeeId ? updated : prev));
+        }
+      } else {
+        const res = await api.post('/employees', payload);
+        if (res.data?.success && res.data?.data) {
+          setEmployees(prev => [...prev, mapEmployee(res.data.data)]);
+        }
+      }
+      setIsModalOpen(false);
+    } catch (err) {
+      const message =
+        err?.response?.data?.message ||
+        (isEditMode ? 'Failed to update employee.' : 'Failed to create employee.');
+      setFormError(message);
+      console.error('Failed to save employee:', err?.response?.data || err.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
-  // Delete employee
-  const handleDeleteEmployee = (empId, e) => {
+  // Delete employee — persisted to the backend
+  const handleDeleteEmployee = async (empId, e) => {
     if (e) e.stopPropagation();
-    setEmployees(prev => prev.filter(emp => emp.id !== empId));
-    setSelectedEmployeeIds(prev => prev.filter(id => id !== empId));
+
+    setIsDeleting(true);
+    try {
+      const res = await api.delete(`/employees/${empId}`);
+      if (res.data?.success) {
+        setEmployees(prev => prev.filter(emp => emp.id !== empId));
+        setSelectedEmployeeIds(prev => prev.filter(id => id !== empId));
+        setSelectedEmployee(prev => (prev && prev.id === empId ? null : prev));
+      }
+    } catch (err) {
+      console.error('Failed to delete employee:', err?.response?.data || err.message);
+      alert(err?.response?.data?.message || 'Failed to delete employee. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // Bulk delete selected employees — persisted to the backend
+  const handleBulkDelete = async () => {
+    if (selectedEmployeeIds.length === 0) return;
+
+    setIsDeleting(true);
+    try {
+      await Promise.all(selectedEmployeeIds.map(id => api.delete(`/employees/${id}`)));
+      setEmployees(prev => prev.filter(emp => !selectedEmployeeIds.includes(emp.id)));
+      setSelectedEmployeeIds([]);
+    } catch (err) {
+      console.error('Failed to delete employees:', err?.response?.data || err.message);
+      alert(err?.response?.data?.message || 'Failed to delete selected employees. Please try again.');
+      // Re-sync with the server so the UI reflects what actually got deleted
+      try {
+        const res = await api.get('/employees');
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          setEmployees(res.data.data.map(mapEmployee));
+        }
+      } catch (fetchErr) {
+        console.error('Failed to re-sync employees:', fetchErr);
+      }
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
-    <div className="space-y-6 w-full px-4 sm:px-6 py-6">
+    <div className={`space-y-6 w-full px-4 sm:px-6 py-6 transition-opacity duration-300 ${isLoadingEmployees ? 'opacity-60' : 'opacity-100'}`}>
+      {/* Live data error banner */}
+      {fetchError && (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 text-xs font-medium px-4 py-2.5 rounded-lg">
+          <AlertTriangle size={14} />
+          <span>{fetchError}</span>
+        </div>
+      )}
+
       {/* 1. TOP STAT CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm relative overflow-hidden">
@@ -591,7 +719,7 @@ const HRContent = () => {
                   </td>
                   <td className="py-4 px-4">
                     <div className="flex items-center space-x-3">
-                      <img src={emp.avatar} alt={emp.name} className="w-9 h-9 rounded-full object-cover border border-gray-200" />
+                      <img src={emp.avatar || DEFAULT_AVATAR} alt={emp.name} className="w-9 h-9 rounded-full object-cover border border-gray-200" onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)} />
                       <div>
                         <p className="font-bold text-gray-900 text-sm">{emp.name}</p>
                         <p className="text-[11px] text-gray-400">{emp.email}</p>
@@ -829,10 +957,11 @@ const HRContent = () => {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 transition-colors cursor-pointer"
+                    disabled={isUploadingAvatar}
+                    className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full shadow-md hover:bg-blue-700 transition-colors cursor-pointer disabled:opacity-70 disabled:cursor-wait"
                     title="Upload Profile Picture"
                   >
-                    <Camera size={14} />
+                    {isUploadingAvatar ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
                   </button>
                   <input
                     ref={fileInputRef}
@@ -842,7 +971,9 @@ const HRContent = () => {
                     className="hidden"
                   />
                 </div>
-                <p className="text-[11px] text-gray-400 mt-2 font-medium">Click camera to upload profile picture</p>
+                <p className="text-[11px] text-gray-400 mt-2 font-medium">
+                  {isUploadingAvatar ? 'Uploading image...' : 'Click camera to upload profile picture'}
+                </p>
               </div>
 
               <div>
@@ -926,6 +1057,29 @@ const HRContent = () => {
                 </div>
               </div>
 
+              <div>
+                <label className="block text-xs font-semibold text-gray-700 mb-1">Performance Score (%)</label>
+                <div className="relative">
+                  <Star size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="number"
+                    min="0"
+                    max="100"
+                    placeholder="e.g. 85"
+                    value={formPerformance}
+                    onChange={(e) => setFormPerformance(e.target.value)}
+                    className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              </div>
+
+              {formError && (
+                <div className="flex items-center gap-2 bg-red-50 border border-red-200 text-red-600 text-xs font-medium px-3 py-2 rounded-lg">
+                  <AlertTriangle size={14} />
+                  <span>{formError}</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
                 <button 
                   type="button"
@@ -936,10 +1090,11 @@ const HRContent = () => {
                 </button>
                 <button 
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2 cursor-pointer"
+                  disabled={isSaving || isUploadingAvatar}
+                  className={`bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm transition-colors shadow-sm flex items-center gap-2 cursor-pointer ${isSaving || isUploadingAvatar ? 'opacity-70 cursor-wait' : ''}`}
                 >
-                  <Save size={14} />
-                  {isEditMode ? 'Save Changes' : 'Add Employee'}
+                  {isSaving ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                  {isSaving ? 'Saving...' : isUploadingAvatar ? 'Uploading image...' : isEditMode ? 'Save Changes' : 'Add Employee'}
                 </button>
               </div>
             </form>
@@ -960,9 +1115,10 @@ const HRContent = () => {
 
             <div className="flex items-center gap-4 mb-6 pb-6 border-b border-gray-100">
               <img 
-                src={selectedEmployee.avatar} 
+                src={selectedEmployee.avatar || DEFAULT_AVATAR} 
                 alt={selectedEmployee.name} 
                 className="w-20 h-20 rounded-full object-cover border-4 border-blue-100 shadow-md"
+                onError={(e) => (e.currentTarget.src = DEFAULT_AVATAR)}
               />
               <div>
                 <h3 className="text-2xl font-bold text-gray-900">{selectedEmployee.name}</h3>
