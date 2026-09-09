@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { 
-  Plus, Search, Filter, Calendar, BarChart2, X, CheckSquare, 
-  Code, MessageSquare, Grid, User, Trash2, Edit3, 
-  MoreHorizontal, Share2, Layout, FileText, 
+import api from '../api';
+import {
+  Plus, Search, Filter, Calendar, BarChart2, X, CheckSquare,
+  Code, MessageSquare, Grid, User, Trash2, Edit3,
+  MoreHorizontal, Share2, Layout, FileText,
   AlertCircle, ChevronLeft, Folder, Briefcase, Activity
 } from 'lucide-react';
 
@@ -46,7 +46,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
     const identifier = taskToUpdate ? (taskToUpdate.taskId || taskToUpdate.id) : draggedTaskId;
 
     try {
-      await axios.patch(`http://localhost:8000/api/projects/tasks/${identifier}`, { status: targetStatus });
+      await api.patch(`/projects/tasks/${identifier}`, { status: targetStatus });
       setTasks((prevTasks) => prevTasks.map((t) => (t.id === draggedTaskId || t.taskId === draggedTaskId) ? { ...t, status: targetStatus } : t));
     } catch (error) {
       console.error('Error updating task status:', error);
@@ -74,7 +74,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
 
     try {
       if (editingTaskId) {
-        const response = await axios.patch(`http://localhost:8000/api/projects/tasks/${editingTaskId}`, {
+        const response = await api.patch(`/projects/tasks/${editingTaskId}`, {
           title: formTitle,
           category: formCategory,
           categoryColor: catColor,
@@ -84,7 +84,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
         const updated = response.data;
         setTasks(prev => prev.map(t => ((t.taskId === editingTaskId || t.id === editingTaskId) ? { ...t, ...updated, id: updated.taskId || t.id } : t)));
       } else {
-        const response = await axios.post(`http://localhost:8000/api/projects/${project.id}/tasks`, {
+        const response = await api.post(`/projects/${project.id}/tasks`, {
           title: formTitle,
           category: formCategory,
           categoryColor: catColor,
@@ -105,7 +105,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
   const handleDeleteTask = async (taskId, e) => {
     e.stopPropagation();
     try {
-      await axios.delete(`http://localhost:8000/api/projects/tasks/${taskId}`);
+      await api.delete(`/projects/tasks/${taskId}`);
       setTasks(prev => prev.filter(t => t.id !== taskId && t.taskId !== taskId));
     } catch (error) {
       console.error('Error deleting task:', error);
@@ -543,7 +543,7 @@ export default function AppWorkspace() {
   const [projects, setProjects] = useState([]);
 
   useEffect(() => {
-    axios.get('http://localhost:8000/api/projects')
+    api.get('/projects')
       .then(res => {
         const fetchedProjects = res.data.map(p => ({
           ...p,
@@ -567,7 +567,7 @@ export default function AppWorkspace() {
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
     
     try {
-      const response = await axios.post('http://localhost:8000/api/projects', {
+      const response = await api.post('/projects', {
         name: newProjectName,
         description: newProjectDesc || 'A newly created workspace.',
         color: randomColor
@@ -587,7 +587,7 @@ export default function AppWorkspace() {
   const handleDeleteProject = async (projectId, e) => {
     e.stopPropagation();
     try {
-      await axios.delete(`http://localhost:8000/api/projects/${projectId}`);
+      await api.delete(`/projects/${projectId}`);
       setProjects(prev => prev.filter(p => p.id !== projectId));
     } catch (error) {
       console.error('Error deleting project:', error);

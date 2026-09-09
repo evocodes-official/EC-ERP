@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './api';
 import {
   Building2,
   Bell,
@@ -50,7 +50,7 @@ const SettingsContent = () => {
 
   // Fetch initial settings from backend on load
   useEffect(() => {
-    axios.get('http://localhost:8000/api/settings')
+    api.get('/settings')
       .then((res) => {
         if (res.data) {
           setSettings({
@@ -99,7 +99,7 @@ const SettingsContent = () => {
         weeklyReport: toggles.weeklyReport,
       };
 
-      await axios.put('http://localhost:8000/api/settings', payload);
+      await api.put('/settings', payload);
       alert('Settings saved successfully!');
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -114,7 +114,7 @@ const SettingsContent = () => {
         alert('Please fill out both password fields.');
         return;
       }
-      await axios.post('http://localhost:8000/api/settings/password', passwords);
+      await api.post('/settings/password', passwords);
       alert('Admin master password updated successfully!');
       setPasswords({ currentPassword: '', newPassword: '' });
     } catch (error) {

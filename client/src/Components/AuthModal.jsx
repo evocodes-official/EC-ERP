@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Mail, Lock, User, Building2, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import api from './api';
+// import { useGoogleLogin } from '@react-oauth/google';
 
 const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
   const [mode, setMode] = useState(initialMode);
@@ -16,6 +17,29 @@ const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
   });
 
   if (!isOpen) return null;
+
+  // const googleLogin = useGoogleLogin({
+  //   onSuccess: async (tokenResponse) => {
+  //     setLoading(true);
+  //     setError('');
+  //     try {
+  //       const response = await api.post('/auth/google', {
+  //         credential: tokenResponse.credential,
+  //       });
+  //       const { token, user } = response.data;
+  //       localStorage.setItem('ec_erp_token', token);
+  //       localStorage.setItem('ec_erp_user', JSON.stringify(user));
+  //       onLogin();
+  //     } catch (err) {
+  //       setError(err.response?.data?.message || 'Google sign-in failed. Please try again.');
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   },
+  //   onError: () => {
+  //     setError('Google sign-in was cancelled or failed.');
+  //   },
+  // });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -232,9 +256,12 @@ const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
           </div>
 
           {/* Social buttons */}
+          {/*
           <button
             type="button"
-            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all"
+            onClick={() => googleLogin()}
+            disabled={loading}
+            className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
@@ -244,6 +271,7 @@ const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
             </svg>
             Continue with Google
           </button>
+          */}
 
           {/* Bottom switch text */}
           <p className="text-center text-xs text-gray-500 pt-2">

@@ -48,11 +48,6 @@ const LandingPage = () => {
 
   const handleLogin = () => {
     setIsAuthOpen(false);
-    const user = {
-      name: formData.name || 'User',
-      email: formData.email || 'user@example.com',
-    };
-    localStorage.setItem('ec_erp_user', JSON.stringify(user));
     navigate('/dashboard');
   };
 
