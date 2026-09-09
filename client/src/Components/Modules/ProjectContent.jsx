@@ -16,8 +16,8 @@ const columnsConfig = [
 
 // --- 1. THE KANBAN BOARD COMPONENT ---
 function ProjectContent({ project, onBack, updateTasks }) {
-  const tasks = project.tasks || [];
-  const setTasks = (updater) => updateTasks(project.id, updater);
+  const tasks = project?.tasks || [];
+  const setTasks = (updater) => updateTasks(project?.id, updater);
 
   const [draggedTaskId, setDraggedTaskId] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,7 +81,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
           dueDate: formDueDate,
           assigneeInitials: formAssignee
         });
-        const updated = response.data;
+        const updated = response.data?.data || response.data;
         setTasks(prev => prev.map(t => ((t.taskId === editingTaskId || t.id === editingTaskId) ? { ...t, ...updated, id: updated.taskId || t.id } : t)));
       } else {
         const response = await api.post(`/projects/${project.id}/tasks`, {
@@ -92,7 +92,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
           assigneeInitials: formAssignee,
           assigneeBg: formAssignee === 'AG' ? 'bg-amber-600' : 'bg-blue-600'
         });
-        const createdTask = response.data;
+        const createdTask = response.data?.data || response.data;
         const formattedTask = { ...createdTask, id: createdTask.taskId || createdTask._id };
         setTasks(prev => [formattedTask, ...prev]);
       }
@@ -121,10 +121,10 @@ function ProjectContent({ project, onBack, updateTasks }) {
   const completionRate = totalTasks ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
   const filteredTasks = tasks.filter((task) =>
-    task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    task.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (task.id && task.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (task.taskId && task.taskId.toLowerCase().includes(searchQuery.toLowerCase()))
+    (task?.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (task?.category || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (task?.id && String(task.id).toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (task?.taskId && String(task.taskId).toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // --- RENDER VIEWS BASED ON TAB ---
@@ -217,7 +217,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
                           <td className="py-4 px-5 text-slate-900 font-medium">{task.title}</td>
                           <td className="py-4 px-5">
                             <span className="capitalize text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-600">
-                              {task.status.replace('-', ' ')}
+                              {(task.status || '').replace('-', ' ')}
                             </span>
                           </td>
                           <td className="py-4 px-5">
@@ -280,7 +280,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
                         
                         <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500">
                           <span className="flex items-center gap-1"><CheckSquare size={14}/> {taskIdDisplay}</span>
-                          <span className="flex items-center gap-1">Status: <strong className="capitalize text-slate-700">{task.status.replace('-', ' ')}</strong></span>
+                          <span className="flex items-center gap-1">Status: <strong className="capitalize text-slate-700">{(task.status || '').replace('-', ' ')}</strong></span>
                           <span className="flex items-center gap-1"><User size={14} /> Assignee: <strong className="text-slate-700">{task.assigneeInitials}</strong></span>
                         </div>
                       </div>
@@ -368,14 +368,14 @@ function ProjectContent({ project, onBack, updateTasks }) {
               <span className="text-slate-300">/</span>
             </div>
             <div className="flex items-center gap-2.5 min-w-0 flex-1">
-              <div className={`${project.color} text-white p-1 rounded-lg font-bold text-xs flex items-center justify-center shadow-sm w-8 h-8 shrink-0`}>
-                {project.name.substring(0, 1).toUpperCase()}
+              <div className={`${project?.color || 'bg-blue-500'} text-white p-1 rounded-lg font-bold text-xs flex items-center justify-center shadow-sm w-8 h-8 shrink-0`}>
+                {(project?.name || 'P').substring(0, 1).toUpperCase()}
               </div>
               <h1 className="font-bold text-slate-900 text-sm md:text-base truncate">
-                {project.name}
+                {project?.name || 'Untitled Project'}
               </h1>
               <div className="hidden xs:flex items-center gap-1 text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full shrink-0">
-                <User size={12} /> {project.members || 1}
+                <User size={12} /> {project?.members || 1}
               </div>
             </div>
           </div>
@@ -545,7 +545,8 @@ export default function AppWorkspace() {
   useEffect(() => {
     api.get('/projects')
       .then(res => {
-        const fetchedProjects = res.data.map(p => ({
+        const rawList = Array.isArray(res.data?.data) ? res.data.data : Array.isArray(res.data) ? res.data : [];
+        const fetchedProjects = rawList.map(p => ({
           ...p,
           id: p._id || p.id,
           tasks: (p.tasks || []).map(t => ({ ...t, id: t.taskId || t._id }))
@@ -572,8 +573,13 @@ export default function AppWorkspace() {
         description: newProjectDesc || 'A newly created workspace.',
         color: randomColor
       });
-      const createdProj = response.data;
-      const formattedProj = { ...createdProj, id: createdProj._id || createdProj.id, tasks: createdProj.tasks || [] };
+      const createdProj = response.data?.data || response.data;
+      const formattedProj = { 
+        ...createdProj, 
+        id: createdProj._id || createdProj.id, 
+        name: createdProj.name || newProjectName,
+        tasks: createdProj.tasks || [] 
+      };
 
       setProjects([...projects, formattedProj]);
       setIsProjectModalOpen(false);
@@ -644,11 +650,11 @@ export default function AppWorkspace() {
           >
             <div className="flex items-start justify-between mb-4">
               <div className={`w-11 h-11 rounded-xl ${proj.color || 'bg-blue-500'} text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0`}>
-                {proj.name.substring(0, 1).toUpperCase()}
+                {(proj.name || 'P').substring(0, 1).toUpperCase()}
               </div>
               <button 
                 onClick={(e) => handleDeleteProject(proj.id, e)}
-                className="text-slate-400 opacity-100    hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
+                className="text-slate-400 opacity-100 hover:text-red-600 p-1.5 rounded-lg hover:bg-red-50 cursor-pointer"
                 title="Delete Project"
               >
                 <Trash2 size={18} />
@@ -709,14 +715,14 @@ export default function AppWorkspace() {
               </div>
               <div className="flex flex-col-reverse sm:flex-row items-center justify-end gap-3 pt-5 mt-2 border-t border-slate-100">
                 <button 
-                  type="button"
+                  type="button" 
                   onClick={() => setIsProjectModalOpen(false)}
                   className="w-full sm:w-auto px-4 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
-                  type="submit"
+                  type="submit" 
                   className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-xl text-sm transition-colors shadow-sm flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <Plus size={16} /> Create Board
