@@ -52,21 +52,22 @@ const SettingsContent = () => {
   useEffect(() => {
     api.get('/settings')
       .then((res) => {
-        if (res.data) {
+        const settingsData = res.data?.data || res.data;
+        if (settingsData) {
           setSettings({
-            organizationName: res.data.organizationName || '',
-            enterpriseDomain: res.data.enterpriseDomain || '',
-            supportEmail: res.data.supportEmail || '',
-            timezone: res.data.timezone || '',
-            defaultCurrency: res.data.defaultCurrency || '',
-            fiscalYearStart: res.data.fiscalYearStart || '',
-            apiKey: res.data.apiKey || '',
+            organizationName: settingsData.organizationName || '',
+            enterpriseDomain: settingsData.enterpriseDomain || '',
+            supportEmail: settingsData.supportEmail || '',
+            timezone: settingsData.timezone || '',
+            defaultCurrency: settingsData.defaultCurrency || '',
+            fiscalYearStart: settingsData.fiscalYearStart || '',
+            apiKey: settingsData.apiKey || '',
           });
           setToggles({
-            twoFactor: res.data.twoFactorEnforced ?? true,
-            emailNotifs: res.data.emailNotifs ?? true,
-            auditAlerts: res.data.forcePasswordChange ?? true,
-            weeklyReport: res.data.weeklyReport ?? false,
+            twoFactor: settingsData.twoFactorEnforced ?? true,
+            emailNotifs: settingsData.emailNotifs ?? true,
+            auditAlerts: settingsData.forcePasswordChange ?? true,
+            weeklyReport: settingsData.weeklyReport ?? false,
             apiAccess: true,
           });
         }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from './api';
 import * as XLSX from 'xlsx';
 import { Share, Download, ChevronDown, TrendingUp } from 'lucide-react';
 
@@ -24,11 +24,12 @@ const ReportsContent = () => {
   // Fetch report metrics from backend on load or when filters apply
   const fetchReports = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/api/reports', {
+      const response = await api.get('/reports', {
         params: { dateRange, parameter }
       });
-      if (response.data) {
-        setReportData(response.data);
+      const report = response.data?.data || response.data;
+      if (report) {
+        setReportData((prev) => ({ ...prev, ...report }));
       }
     } catch (error) {
       console.error('Error fetching report data:', error);
@@ -37,7 +38,7 @@ const ReportsContent = () => {
 
   useEffect(() => {
     fetchReports();
-  }, []);
+  }, [dateRange, parameter]);
 
   // Handle Excel Export (Export All)
   const handleExportExcel = () => {

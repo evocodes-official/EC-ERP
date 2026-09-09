@@ -62,7 +62,15 @@ const AuthModal = ({ isOpen, onClose, onLogin, initialMode = 'login' }) => {
 
       onLogin();
     } catch (err) {
-      setError(err.response?.data?.message || 'Something went wrong. Please try again.');
+      if (err.code === 'ERR_NETWORK' || !err.response) {
+        setError('Unable to reach the server. Please start the backend on http://localhost:8000 and try again.');
+      } else {
+        const status = err.response?.status;
+        const message = err.response?.data?.message || 'Something went wrong. Please try again.';
+        const serverError = err.response?.data?.error;
+        const display = serverError ? `${message} — ${serverError}` : message;
+        setError(`${status}: ${display}`);
+      }
     } finally {
       setLoading(false);
     }
