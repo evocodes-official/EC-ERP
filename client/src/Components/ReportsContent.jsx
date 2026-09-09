@@ -1,69 +1,77 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import * as XLSX from 'xlsx';
 import { Share, Download, ChevronDown, TrendingUp } from 'lucide-react';
-import api from './api';
-
-// Compact currency formatting (INR, Indian numbering): 24000000 -> ₹2.4Cr, 450000 -> ₹4.5L
-const formatCompactCurrency = (value) => {
-  const n = Number(value) || 0;
-  if (Math.abs(n) >= 10000000) {
-    return `₹${(n / 10000000).toFixed(2).replace(/\.00$/, '')}Cr`;
-  }
-  if (Math.abs(n) >= 100000) {
-    return `₹${(n / 100000).toFixed(2).replace(/\.00$/, '')}L`;
-  }
-  if (Math.abs(n) >= 1000) {
-    return `₹${(n / 1000).toFixed(1).replace(/\.0$/, '')}K`;
-  }
-  return `₹${n.toLocaleString('en-IN')}`;
-};
 
 const ReportsContent = () => {
-  // State for date range selection
+  // State for date range and parameters
   const [dateRange, setDateRange] = useState('Jul 01 - Sep 30, 2024');
-  
-  // State for parameters
   const [parameter, setParameter] = useState('Cost vs Performance');
-
-  // Live finance stats (GET /api/finance/stats) — demo fallback when unreachable
-  const [financeStats, setFinanceStats] = useState({
-    revenue: 428950,
-    expenses: 182340.5,
-    netProfit: 246609.5,
-    netProfitMargin: '57.5%',
-    outstanding: 23980,
+  
+  // State for fetched report data
+  const [reportData, setReportData] = useState({
+    revenueGrowthRate: 12.4,
+    globalPerformanceScore: 84,
+    monthlyData: [],
+    departmentBreakdown: [
+      { name: 'Sales', color: 'bg-blue-600', percentage: '45%' },
+      { name: 'Marketing', color: 'bg-emerald-500', percentage: '25%' },
+      { name: 'R&D', color: 'bg-blue-900', percentage: '20%' },
+      { name: 'Ops', color: 'bg-gray-400', percentage: '10%' },
+    ]
   });
-  const [isLiveStats, setIsLiveStats] = useState(false);
+
+  // Fetch report metrics from backend on load or when filters apply
+  const fetchReports = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/reports', {
+        params: { dateRange, parameter }
+      });
+      if (response.data) {
+        setReportData(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching report data:', error);
+    }
+  };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchFinanceStats = async () => {
-      try {
-        const res = await api.get('/finance/stats');
-        if (isMounted && res.data?.success && res.data?.data) {
-          setFinanceStats(res.data.data);
-          setIsLiveStats(true);
-        }
-      } catch (err) {
-        // Keep sample data visible when the API is unavailable
-        if (isMounted) setIsLiveStats(false);
-        console.error('Failed to load finance stats:', err?.response?.data || err.message);
-      }
-    };
-
-    fetchFinanceStats();
-    return () => {
-      isMounted = false;
-    };
+    fetchReports();
   }, []);
 
-  // Dummy data for example purposes
-  const departments = [
-    { name: 'Sales', color: 'bg-blue-600', value: '45%' },
-    { name: 'Marketing', color: 'bg-emerald-500', value: '25%' },
-    { name: 'R&D', color: 'bg-blue-900', value: '20%' },
-    { name: 'Ops', color: 'bg-gray-400', value: '10%' },
-  ];
+  // Handle Excel Export (Export All)
+  const handleExportExcel = () => {
+    try {
+      // 1. Prepare worksheet data from departments
+      const deptSheetData = reportData.departmentBreakdown.map(dept => ({
+        Department: dept.name,
+        PerformanceShare: dept.percentage
+      }));
+
+      // 2. Prepare worksheet data from monthly metrics if available
+      const monthlySheetData = (reportData.monthlyData || []).map(m => ({
+        Month: m.month,
+        Revenue: m.revenue
+      }));
+
+      // Create a new workbook and add sheets
+      const wb = XLSX.utils.book_new();
+      
+      const wsDepts = XLSX.utils.json_to_sheet(deptSheetData);
+      XLSX.utils.book_append_sheet(wb, wsDepts, "Department Performance");
+
+      if (monthlySheetData.length > 0) {
+        const wsMonthly = XLSX.utils.json_to_sheet(monthlySheetData);
+        XLSX.utils.book_append_sheet(wb, wsMonthly, "Monthly Revenue");
+      }
+
+      // Trigger file download
+      XLSX.writeFile(wb, `EVO_ERP_Report_${dateRange.replace(/ /g, '_')}.xlsx`);
+    } catch (error) {
+      console.error('Error exporting to Excel:', error);
+      alert('Failed to export data.');
+    }
+  };
 
   return (
     <div className="w-full bg-gray-50 text-gray-900 font-sans">
@@ -78,11 +86,14 @@ const ReportsContent = () => {
             <p className="text-gray-600 mt-0.5 text-sm">Data visualization and automated reporting.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2.5 px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-300 rounded-full font-semibold text-sm transition shadow-sm">
+            <button className="flex items-center gap-2.5 px-5 py-2.5 bg-white hover:bg-gray-50 border border-gray-300 rounded-full font-semibold text-sm transition shadow-sm cursor-pointer">
               <Share className="w-4 h-4 text-gray-600" />
               Share
             </button>
-            <button className="flex items-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm transition shadow-lg shadow-blue-500/30">
+            <button 
+              onClick={handleExportExcel}
+              className="flex items-center gap-2.5 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm transition shadow-lg shadow-blue-500/30 cursor-pointer"
+            >
               <Download className="w-4 h-4" />
               Export All
             </button>
@@ -96,26 +107,44 @@ const ReportsContent = () => {
             {/* Filter: Date Range */}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">DATE RANGE</label>
-              <button className="flex items-center justify-between gap-4 px-4 py-2.5 border border-gray-300 rounded-full text-sm font-semibold w-60 group hover:border-gray-400">
-                <span>{dateRange}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-900" />
-              </button>
+              <select 
+                value={dateRange}
+                onChange={(e) => setDateRange(e.target.value)}
+                className="flex items-center justify-between gap-4 px-4 py-2.5 border border-gray-300 rounded-full text-sm font-semibold w-60 bg-white cursor-pointer"
+              >
+                <option value="Jul 01 - Sep 30, 2024">Jul 01 - Sep 30, 2024</option>
+                <option value="Oct 01 - Dec 31, 2024">Oct 01 - Dec 31, 2024</option>
+                <option value="Jan 01 - Mar 31, 2025">Jan 01 - Mar 31, 2025</option>
+              </select>
             </div>
 
             {/* Filter: Parameter */}
             <div>
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">PARAMETER</label>
-              <button className="flex items-center justify-between gap-4 px-4 py-2.5 border border-gray-300 rounded-full text-sm font-semibold w-60 group hover:border-gray-400">
-                <span>{parameter}</span>
-                <ChevronDown className="w-4 h-4 text-gray-400 group-hover:text-gray-900" />
-              </button>
+              <select 
+                value={parameter}
+                onChange={(e) => setParameter(e.target.value)}
+                className="flex items-center justify-between gap-4 px-4 py-2.5 border border-gray-300 rounded-full text-sm font-semibold w-60 bg-white cursor-pointer"
+              >
+                <option value="Cost vs Performance">Cost vs Performance</option>
+                <option value="Revenue Optimization">Revenue Optimization</option>
+                <option value="Resource Allocation">Resource Allocation</option>
+              </select>
             </div>
           </div>
 
           {/* Apply / Clear Buttons */}
           <div className="flex items-center gap-3">
-            <button className="text-sm font-semibold text-blue-700 hover:text-blue-900 px-3 py-2">Clear Filters</button>
-            <button className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm transition shadow shadow-blue-500/20">
+            <button 
+              onClick={() => { setDateRange('Jul 01 - Sep 30, 2024'); setParameter('Cost vs Performance'); }}
+              className="text-sm font-semibold text-blue-700 hover:text-blue-900 px-3 py-2 cursor-pointer"
+            >
+              Clear Filters
+            </button>
+            <button 
+              onClick={fetchReports}
+              className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full font-semibold text-sm transition shadow shadow-blue-500/20 cursor-pointer"
+            >
               Apply Analytics
             </button>
           </div>
@@ -126,36 +155,12 @@ const ReportsContent = () => {
           
           {/* Card 1: Monthly Revenue Growth */}
           <article className="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-gray-100 relative">
-            <header className="flex justify-between items-start mb-4">
-              <div>
-                <h3 className="text-lg font-bold">Monthly Revenue Growth</h3>
-                {/* Live figures from /finance/stats */}
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-2 text-xs">
-                  <span className="font-semibold text-gray-900">
-                    Revenue: {formatCompactCurrency(financeStats.revenue)}
-                  </span>
-                  <span className="font-semibold text-rose-600">
-                    Expenses: {formatCompactCurrency(financeStats.expenses)}
-                  </span>
-                  <span className="font-semibold text-emerald-600">
-                    Net Profit: {formatCompactCurrency(financeStats.netProfit)}{' '}
-                    {financeStats.netProfitMargin ? `(${financeStats.netProfitMargin})` : ''}
-                  </span>
-                  <span className="font-semibold text-amber-600">
-                    Outstanding: {formatCompactCurrency(financeStats.outstanding)}
-                  </span>
-                  {isLiveStats && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-600">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      Live
-                    </span>
-                  )}
-                </div>
-              </div>
+            <header className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">Monthly Revenue Growth</h3>
               {/* Badge for growth */}
-              <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full shrink-0">
+              <div className="flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-full">
                 <TrendingUp className="w-3.5 h-3.5" />
-                +12.4%
+                +{reportData.revenueGrowthRate}%
               </div>
             </header>
 
@@ -190,6 +195,7 @@ const ReportsContent = () => {
             {/* Donut Chart and Value */}
             <div className="relative aspect-square max-w-[220px] mx-auto flex items-center justify-center my-2">
               
+              
               <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
                 {/* Background circle */}
                 <path className="text-gray-100" fill="none" strokeWidth="3" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"/>
@@ -201,17 +207,17 @@ const ReportsContent = () => {
 
               {/* Central Value */}
               <div className="absolute flex flex-col items-center">
-                <span className="text-4xl font-extrabold text-blue-900">84%</span>
+                <span className="text-4xl font-extrabold text-blue-900">{reportData.globalPerformanceScore}%</span>
                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mt-0.5">GLOBAL</span>
               </div>
             </div>
 
             {/* Department Legend */}
             <footer className="grid grid-cols-2 gap-x-4 gap-y-2 pt-4 border-t border-gray-100">
-              {departments.map(dept => (
+              {reportData.departmentBreakdown.map(dept => (
                 <div key={dept.name} className="flex items-center gap-2">
-                  <div className={`w-2.5 h-2.5 rounded-full ${dept.color}`}></div>
-                  <span className="text-xs font-medium text-gray-700">{dept.name}</span>
+                  <div className={`w-2.5 h-2.5 rounded-full ${dept.color || 'bg-blue-600'}`}></div>
+                  <span className="text-xs font-medium text-gray-700">{dept.name} ({dept.percentage})</span>
                 </div>
               ))}
             </footer>
