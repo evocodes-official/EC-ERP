@@ -79,6 +79,7 @@ export default function Inventories() {
   const [statusFilter, setStatusFilter] = useState('ALL');
 
   const [menuOpenId, setMenuOpenId] = useState(null);
+  const [menuPosition, setMenuPosition] = useState(null);
   const [modal, setModal] = useState(null); // { editing: item | null }
   const [form, setForm] = useState(null);
   const [formError, setFormError] = useState('');
@@ -319,7 +320,7 @@ export default function Inventories() {
       </div>
 
       {/* Table Section */}
-      <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-white border border-slate-200 min-h-142 rounded-xl shadow-sm overflow-hidden flex flex-col">
         {/* Table Toolbar — working search + filter */}
         <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-between items-center bg-slate-50/50">
           <div className="relative w-full sm:max-w-xs md:max-w-md">
@@ -350,7 +351,7 @@ export default function Inventories() {
         </div>
 
         {/* Scrollable Table Wrapper */}
-        <div className="w-full overflow-x-auto custom-scrollbar">
+        <div className="w-full overflow-x-auto custom-scrollbar h-max">
           <table className="w-full text-left border-collapse min-w-[700px]">
             <thead className="bg-slate-50 text-xs uppercase text-slate-500 font-semibold">
               <tr>
