@@ -19,11 +19,9 @@ import ProfileContent from './Components/ProfileContent';
 
 export default function ERP() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  
-  // NEW: State to control the mobile sidebar
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  // Wrapper function to close sidebar on mobile when a link is clicked
+  // Wrapper function to close sidebar on mobile/tablet when a tab link is clicked
   const handleTabChange = (tab) => {
     setActiveTab(tab);
     setIsSidebarOpen(false); 
@@ -47,41 +45,39 @@ export default function ERP() {
   };
 
   return (
-    // Set h-screen and overflow-hidden to prevent body scrolling weirdness on mobile
     <div className="flex bg-slate-50 h-screen w-full font-sans antialiased text-gray-900 overflow-hidden relative">
       
-      {/* MOBILE DARK OVERLAY BACKDROP */}
+      {/* TABLET & MOBILE BACKDROP OVERLAY */}
       {isSidebarOpen && (
         <div 
-          className="fixed inset-0 bg-slate-900/60 z-40 md:hidden backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 z-40 xl:hidden backdrop-blur-sm transition-opacity duration-300"
           onClick={() => setIsSidebarOpen(false)}
         />
       )}
 
-      {/* RESPONSIVE SIDEBAR WRAPPER */}
+      {/* RESPONSIVE DRAWER WRAPPER (Drawer for screens < 1280px, static for desktop xl) */}
       <div 
         className={`
-          fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
-          md:relative md:translate-x-0 h-full
+          fixed inset-y-0 left-0 z-50 transform transition-transform duration-300 ease-in-out shadow-2xl xl:shadow-none
+          xl:relative xl:translate-x-0 h-full
           ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
         `}
       >
         <Sidebar 
           activeTab={activeTab} 
           setActiveTab={handleTabChange} 
+          isSidebarOpen={isSidebarOpen}
           setIsSidebarOpen={setIsSidebarOpen} 
         />
       </div>
 
       {/* MAIN CONTENT AREA */}
       <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
-        {/* Pass the toggle function to the Navbar */}
         <Navbar 
           setActiveTab={handleTabChange} 
-          onMenuClick={() => setIsSidebarOpen(true)} 
+          onMenuClick={() => setIsSidebarOpen((prev) => !prev)} 
         />
         
-        {/* Content canvas - only this part scrolls! */}
         <main className="flex-1 overflow-y-auto overflow-x-hidden p-0">
           {renderActiveComponent()}
         </main>

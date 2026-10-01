@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Search,
   Bell,
@@ -85,7 +86,6 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Persist HR submissions (POST /api/employees)
     if (selectedModule.id === 'hr') {
       try {
         await api.post('/employees', {
@@ -98,6 +98,18 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
       } catch (err) {
         console.error('Failed to create employee:', err?.response?.data || err.message);
         alert(err?.response?.data?.message || 'Failed to create employee. Please try again.');
+        return;
+      }
+    } else if (selectedModule.id === 'crm') {
+      try {
+        await api.post('/deals', {
+          companyName: formData.title,
+          amount: Number(formData.value),
+          description: formData.details || '',
+        });
+      } catch (err) {
+        console.error('Failed to create deal:', err?.response?.data || err.message);
+        alert(err?.response?.data?.message || 'Failed to create deal. Please try again.');
         return;
       }
     }
@@ -320,11 +332,11 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
   return (
     <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center justify-between sticky top-0 z-10 shrink-0 gap-2">
       
-      {/* RESPONSIVE LEFT SIDE (Hamburger + Search) */}
+      {/* RESPONSIVE LEFT SIDE (Hamburger shown on all phones & tablets < 1280px) */}
       <div className="flex items-center gap-2 sm:gap-4 flex-1">
         <button
           onClick={onMenuClick}
-          className="md:hidden p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer shrink-0"
+          className="xl:hidden p-1.5 text-gray-500 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer shrink-0"
         >
           <Menu size={22} />
         </button>
@@ -404,19 +416,27 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
           <Grid size={18} />
         </button>
 
-        {/* GRID / APPS TRAY */}
+        {/* GRID / APPS TRAY (Universally Responsive) */}
         {isGridTrayOpen && (
           <div className="fixed inset-0 z-40" onClick={() => setIsGridTrayOpen(false)}>
             <div 
               ref={gridTrayRef}
-              className="absolute right-4 top-14 w-72 bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50"
+              className="fixed top-14 right-2 sm:right-4 w-[calc(100vw-1rem)] sm:w-80 max-w-sm bg-white rounded-xl shadow-xl border border-gray-200 overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 border-b border-gray-100">
-                <h3 className="font-bold text-gray-900 text-sm">Quick Access</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Navigate to any module</p>
+              <div className="p-3 sm:p-4 border-b border-gray-100 flex items-center justify-between">
+                <div>
+                  <h3 className="font-bold text-gray-900 text-sm">Quick Access</h3>
+                  <p className="text-xs text-gray-500 mt-0.5">Navigate to any module</p>
+                </div>
+                <button 
+                  onClick={() => setIsGridTrayOpen(false)}
+                  className="p-1 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors sm:hidden"
+                >
+                  <X size={16} />
+                </button>
               </div>
-              <div className="p-3">
+              <div className="p-2.5 sm:p-3 max-h-[calc(80vh-70px)] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-2">
                   {gridNavItems.map((item) => {
                     const Icon = item.icon;
@@ -425,16 +445,16 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
                       <button
                         key={item.id}
                         onClick={() => { setActiveTab(item.id); setIsGridTrayOpen(false); }}
-                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
+                        className={`flex items-center gap-2.5 p-2.5 rounded-xl border transition-all text-left ${
                           isActive
                             ? 'bg-blue-50 border-blue-200'
                             : 'bg-white border-gray-200 hover:border-gray-300 hover:shadow-sm'
                         }`}
                       >
-                        <div className={`p-2 rounded-lg ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-50 text-gray-600'}`}>
+                        <div className={`p-1.5 sm:p-2 rounded-lg shrink-0 ${isActive ? 'bg-blue-100 text-blue-600' : 'bg-gray-50 text-gray-600'}`}>
                           <Icon size={16} />
                         </div>
-                        <span className="text-sm font-medium text-gray-900">{item.name}</span>
+                        <span className="text-xs sm:text-sm font-medium text-gray-900 truncate">{item.name}</span>
                       </button>
                     );
                   })}
@@ -454,10 +474,13 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
       </div>
 
       {/* MODULE SELECTION MODAL */}
-      {isModuleModalOpen && !selectedModule && (
+      {isModuleModalOpen && !selectedModule && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAllModals}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
+          <div 
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" 
+            onClick={closeAllModals}
+          />
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-xl font-bold text-gray-900">Create New</h3>
@@ -485,17 +508,21 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
               })}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* MODULE-SPECIFIC CREATE FORM MODAL */}
-      {isModuleModalOpen && selectedModule && (
+      {isModuleModalOpen && selectedModule && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={closeAllModals}></div>
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
+          <div 
+            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" 
+            onClick={closeAllModals}
+          />
+          <div className="relative z-10 bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <button onClick={() => setSelectedModule(null)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all" title="Back to modules">
+                <button onClick={() => setSelectedModule(null)} className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all">
                   <ArrowLeft size={18} />
                 </button>
                 <div>
@@ -519,7 +546,8 @@ const Navbar = ({ setActiveTab, onMenuClick }) => {
             </div>
             {renderModuleForm()}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </header>
   );
