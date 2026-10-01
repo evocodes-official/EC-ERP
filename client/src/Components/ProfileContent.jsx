@@ -11,7 +11,6 @@ import {
   BadgeCheck,
   Award,
   Clock,
-  GraduationCap,
   Languages,
   Pencil,
   Save,
@@ -29,6 +28,8 @@ import {
   Users,
   LogOut,
   ChevronRight,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import api from './api';
 
@@ -92,6 +93,7 @@ const ProfileContent = () => {
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarError, setAvatarError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const fileInputRef = useRef(null);
 
   const [skills, setSkills] = useState(DEFAULT_PROFILE.skills);
@@ -227,8 +229,8 @@ const ProfileContent = () => {
   };
 
   const fieldClass =
-    'w-full bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 transition-all';
-  const labelClass = 'block text-xs font-semibold text-gray-700 mb-1';
+    'w-full bg-white border border-gray-300 rounded-xl px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all';
+  const labelClass = 'block text-[11px] font-semibold text-gray-600 mb-1.5 uppercase tracking-wider';
 
   const stats = [
     { icon: BriefcaseBusiness, color: 'text-blue-600 bg-blue-50', label: 'Projects Completed', value: '42' },
@@ -246,7 +248,7 @@ const ProfileContent = () => {
 
   const activity = [
     { icon: CheckCircle2, color: 'text-emerald-600 bg-emerald-50', title: 'Completed weekly operations review', time: '2 hours ago' },
-    { icon: BriefcaseBusiness, color: 'text-blue-600 bg-blue-50', title: 'Closed deal #CR-2041 worth ₹48,000', time: '5 hours ago' },
+    { icon: BriefcaseBusiness, color: 'text-blue-600 bg-blue-50', title: 'Closed deal #CR-2041 worth <span>48,000</span>', time: '5 hours ago' },
     { icon: Users, color: 'text-cyan-600 bg-cyan-50', title: 'Added 3 employees to Engineering', time: 'Yesterday' },
     { icon: Award, color: 'text-amber-600 bg-amber-50', title: 'Updated Q3 financial forecast', time: '2 days ago' },
     { icon: MessageSquare, color: 'text-purple-600 bg-purple-50', title: 'Resolved support ticket #SUP-118', time: '3 days ago' },
@@ -257,8 +259,8 @@ const ProfileContent = () => {
     { device: 'iPhone 15 Pro', detail: 'iOS 18 · Safari · Last active 3h ago', current: false },
   ];
 
-return (
-    <div className="space-y-6 w-full max-w-7xl mx-auto px-4 sm:px-6 py-6 pb-16">
+  return (
+    <div className="space-y-8 w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-24">
       {/* Page Title */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -269,7 +271,7 @@ return (
         </div>
         <button
           onClick={() => user.email && navigator.clipboard?.writeText(user.email)}
-          className="flex items-center space-x-2 bg-white border border-gray-200 px-3 py-2 rounded-lg text-xs font-medium text-gray-600 hover:bg-gray-50 shadow-sm w-fit"
+          className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50 shadow-sm w-fit transition-colors"
           title="Share profile"
         >
           <Share2 size={14} />
@@ -277,59 +279,60 @@ return (
         </button>
       </div>
 
-      {/* COVER */}
-      <div className="relative overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-sm">
-        <div className="relative h-40 sm:h-48 md:h-56 bg-gradient-to-r from-blue-600 via-indigo-600 to-violet-600">
+      {/* COVER / HERO */}
+      <div className="relative overflow-hidden rounded-3xl border border-gray-200 shadow-sm bg-white">
+        <div className="relative h-44 sm:h-52 md:h-60 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-950">
           <div
-            className="absolute inset-0 opacity-20"
+            className="absolute inset-0 opacity-30"
             style={{
               backgroundImage:
-                'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.6) 0, transparent 40%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.5) 0, transparent 35%)',
+                'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.7) 0, transparent 40%), radial-gradient(circle at 80% 20%, rgba(255,255,255,0.6) 0, transparent 35%)',
             }}
           />
-          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:20px_20px]" />
-          <div className="absolute -bottom-16 -right-10 w-56 h-56 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute -top-12 -left-8 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
-          <button className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/15 backdrop-blur-md border border-white/20 text-white text-[11px] font-bold px-3 py-1.5 rounded-full shadow-sm hover:bg-white/25 transition-colors cursor-pointer">
+          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.12)_1px,transparent_1px)] bg-[size:24px_24px]" />
+          <div className="absolute -bottom-20 -right-12 w-64 h-64 rounded-full bg-blue-500/20 blur-3xl" />
+          <div className="absolute -top-16 -left-10 w-48 h-48 rounded-full bg-indigo-500/15 blur-3xl" />
+          <div className="absolute -bottom-8 left-1/3 w-40 h-40 rounded-full bg-violet-500/10 blur-2xl" />
+
+          <button className="absolute top-4 right-4 flex items-center gap-1.5 bg-white/10 hover:bg-white/20 backdrop-blur-md border border-white/20 text-white text-[11px] font-semibold px-3.5 py-1.5 rounded-full shadow-sm transition-all cursor-pointer">
             <Crown size={13} className="text-amber-300" />
             <span>Enterprise Member</span>
           </button>
         </div>
 
         {/* Profile header body */}
-        <div className="px-5 sm:px-8 pb-6 -mt-14 sm:-mt-16">
-          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-{/* Avatar */}
-             <div className="relative shrink-0">
-               <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gray-100">
-                 {!avatarError && avatarPreview ? (
-                   <img
-                     src={avatarPreview}
-                     alt={user.name}
-                     className="w-full h-full object-cover"
-                     onError={() => setAvatarError(true)}
-                   />
-                 ) : avatarPreview ? (
-                   <div className="w-full h-full flex items-center justify-center text-gray-300">
-                     <Users size={48} />
-                   </div>
-                 ) : user.picture ? (
-                   <img
-                     src={user.picture}
-                     alt={user.name}
-                     className="w-full h-full object-cover"
-                     onError={() => setAvatarError(true)}
-                   />
-                 ) : (
-                   <div className="w-full h-full flex items-center justify-center text-gray-300">
-                     <Users size={48} />
-                   </div>
-                 )}
+        <div className="px-6 sm:px-8 pb-6 -mt-16 sm:-mt-20">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-5">
+            {/* Avatar */}
+            <div className="relative shrink-0 -mt-4 sm:-mt-0">
+              <div className="w-30 h-30 sm:w-34 sm:h-34 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gray-100 ring-2 ring-blue-100">
+                {!avatarError && avatarPreview ? (
+                  <img
+                    src={avatarPreview}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : avatarPreview ? (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <Users size={48} />
+                  </div>
+                ) : user.picture ? (
+                  <img
+                    src={user.picture}
+                    alt={user.name}
+                    className="w-full h-full object-cover"
+                    onError={() => setAvatarError(true)}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300">
+                    <Users size={48} />
+                  </div>
+                )}
               </div>
-              {/* Camera edit button */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="absolute -bottom-2 -right-2 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl shadow-md shadow-blue-500/30 transition-colors cursor-pointer"
+                className="absolute -bottom-1 -right-1 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-xl shadow-md shadow-blue-500/30 transition-all cursor-pointer"
                 title="Change profile picture"
               >
                 <Camera size={15} />
@@ -338,23 +341,50 @@ return (
               <span className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" title="Online" />
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{user.name}</h2>
-                <BadgeCheck size={18} className="text-blue-600" />
-                <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Active
-                </span>
+            {/* Employee Details */}
+            <div className="flex-1 min-w-0 pt-28 sm:pt-0 mt-28">
+              <div className="flex flex-wrap items-center gap-2.5 mb-1.5">
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">{user.name}</h2>
+                <BadgeCheck size={20} className="text-blue-600 shrink-0" />
               </div>
-              <p className="text-sm font-semibold text-blue-600 mt-0.5">
-                {user.role} · {user.department}
-              </p>
-              <p className="text-xs text-gray-500 mt-2 max-w-2xl leading-relaxed">{user.bio}</p>
 
-              <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-3 text-xs text-gray-500">
-                <span className="flex items-center gap-1.5"><MapPin size={13} className="text-gray-400" /> {user.location}</span>
-                <span className="flex items-center gap-1.5"><Building2 size={13} className="text-gray-400" /> {user.company}</span>
-                <span className="flex items-center gap-1.5"><CalendarDays size={13} className="text-gray-400" /> Joined {user.joined}</span>
+              {/* Role badge */}
+              <div className="inline-flex items-center gap-1.5 bg-gradient-to-r from-blue-600/10 via-indigo-600/10 to-violet-600/10 border border-blue-200 px-3 py-1.5 rounded-full mb-3">
+                <Crown size={12} className="text-blue-600" />
+                <span className="text-xs font-bold text-blue-700">{user.role}</span>
+                <span className="text-gray-300">·</span>
+                <span className="text-xs font-semibold text-gray-600">{user.department}</span>
+              </div>
+
+              {/* Status badge */}
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 border ml-5 border-emerald-200 px-3 py-1 rounded-full mb-4">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 shadow-sm shadow-emerald-500/50 animate-pulse" />
+                Active now
+              </span>
+
+              {/* Bio */}
+              <div className="mt-3 p-4 bg-gradient-to-r from-gray-50/80 to-gray-50 rounded-2xl border border-gray-100">
+                <p className="text-xs text-gray-600 leading-relaxed max-w-2xl">{user.bio}</p>
+              </div>
+
+              {/* Contact info grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <div className="flex items-center gap-2.5 text-xs text-gray-600">
+                  <MapPin size={13} className="text-gray-400 shrink-0" />
+                  <span>{user.location}</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-xs text-gray-600">
+                  <Building2 size={13} className="text-gray-400 shrink-0" />
+                  <span>{user.company}</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-xs text-gray-600">
+                  <CalendarDays size={13} className="text-gray-400 shrink-0" />
+                  <span>Joined {user.joined}</span>
+                </div>
+                <div className="flex items-center gap-2.5 text-xs text-gray-600">
+                  <Mail size={13} className="text-gray-400 shrink-0" />
+                  <span>{user.email}</span>
+                </div>
               </div>
             </div>
 
@@ -365,23 +395,26 @@ return (
                   <button
                     onClick={handleSave}
                     disabled={saving}
-                    className={`flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-blue-500/30 transition-all cursor-pointer ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}
+                    className={`flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-blue-500/30 transition-all ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
-                    <Save size={14} /> <span>{saving ? 'Saving...' : 'Save'}</span>
+                    <Save size={14} />
+                    <span>{saving ? 'Saving...' : 'Save Changes'}</span>
                   </button>
                   <button
                     onClick={cancelEdit}
-                    className="flex items-center space-x-1 bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                    className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
                   >
-                    <X size={14} /> <span>Cancel</span>
+                    <X size={14} />
+                    <span>Cancel</span>
                   </button>
                 </div>
               ) : (
                 <button
                   onClick={startEdit}
-                  className="flex items-center space-x-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-colors cursor-pointer"
+                  className="flex items-center gap-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-5 py-2.5 rounded-xl text-xs font-semibold shadow-sm transition-all cursor-pointer"
                 >
-                  <Pencil size={14} /> <span>Edit Profile</span>
+                  <Pencil size={14} />
+                  <span>Edit Profile</span>
                 </button>
               )}
             </div>
@@ -394,13 +427,16 @@ return (
         {stats.map((s, i) => {
           const Icon = s.icon;
           return (
-            <div key={i} className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex items-center gap-3">
-              <div className={`p-2.5 rounded-xl ${s.color}`}>
+            <div
+              key={i}
+              className="bg-white p-5 rounded-2xl border border-gray-200 shadow-sm flex items-center gap-4 transition-all hover:shadow-md hover:-translate-y-0.5"
+            >
+              <div className={`p-2.5 rounded-xl ${s.color} shrink-0`}>
                 <Icon size={20} />
               </div>
               <div>
                 <p className="text-xl font-black text-gray-800 leading-none">{s.value}</p>
-                <p className="text-[11px] font-semibold text-gray-400 mt-1 uppercase tracking-wide">{s.label}</p>
+                <p className="text-[11px] font-semibold text-gray-400 mt-1 uppercase tracking-wider">{s.label}</p>
               </div>
             </div>
           );
@@ -412,10 +448,15 @@ return (
         {/* LEFT COLUMN */}
         <div className="lg:col-span-2 space-y-6">
           {/* Personal Information */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">Personal Information</h3>
-              <p className="text-xs text-gray-400">Your basic information and contact details.</p>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-blue-50 text-blue-600 shrink-0">
+                  <BadgeCheck size={16} />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">Personal Information</h3>
+              </div>
+              <p className="text-xs text-gray-400 ml-9 mt-1.5">Your basic information and contact details.</p>
             </div>
             <div className="p-6">
               {isEditing ? (
@@ -426,6 +467,7 @@ return (
                       className={fieldClass}
                       value={form.name}
                       onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      placeholder="Enter your name"
                     />
                   </div>
                   <div>
@@ -435,6 +477,7 @@ return (
                       type="email"
                       value={form.email}
                       onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                      placeholder="you@evo-erp.com"
                     />
                   </div>
                   <div>
@@ -443,6 +486,7 @@ return (
                       className={fieldClass}
                       value={form.phone}
                       onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                      placeholder="+91 98765 43210"
                     />
                   </div>
                   <div>
@@ -451,6 +495,7 @@ return (
                       className={fieldClass}
                       value={form.location}
                       onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
+                      placeholder="City, Country"
                     />
                   </div>
                   <div>
@@ -459,6 +504,7 @@ return (
                       className={fieldClass}
                       value={form.role}
                       onChange={(e) => setForm((f) => ({ ...f, role: e.target.value }))}
+                      placeholder="e.g. Operations Director"
                     />
                   </div>
                   <div>
@@ -467,6 +513,7 @@ return (
                       className={fieldClass}
                       value={form.department}
                       onChange={(e) => setForm((f) => ({ ...f, department: e.target.value }))}
+                      placeholder="e.g. Enterprise Suite"
                     />
                   </div>
                   <div>
@@ -475,15 +522,26 @@ return (
                       className={fieldClass}
                       value={form.company}
                       onChange={(e) => setForm((f) => ({ ...f, company: e.target.value }))}
+                      placeholder="Your company name"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Member Since</label>
+                    <input
+                      className={fieldClass}
+                      value={form.joined}
+                      onChange={(e) => setForm((f) => ({ ...f, joined: e.target.value }))}
+                      placeholder="e.g. January 2022"
                     />
                   </div>
                   <div className="sm:col-span-2">
-                    <label className={labelClass}>Bio</label>
+                    <label className={labelClass}>About</label>
                     <textarea
                       className={`${fieldClass} resize-none`}
                       rows="3"
                       value={form.bio}
                       onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+                      placeholder="Tell us about yourself..."
                     />
                   </div>
                 </form>
@@ -529,40 +587,58 @@ return (
               )}
             </div>
           </div>
-          {/* Skills */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+
+          {/* Skills &amp; Proficiency */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">Skills & Proficiency</h3>
-              <p className="text-xs text-gray-400">Core competencies and tools.</p>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600 shrink-0">
+                  <Award size={16} />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">Skills &amp; Proficiency</h3>
+              </div>
+              <p className="text-xs text-gray-400 ml-9 mt-1.5">Core competencies and tools.</p>
             </div>
             <div className="p-6 space-y-5">
               {isEditing ? (
                 <>
                   {skills.map((skill, i) => (
                     <div key={i}>
-                      <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center justify-between mb-2">
                         <input
                           className={fieldClass}
                           value={skill.name}
                           placeholder="Skill name"
-                          onChange={(e) => setSkills(skills.map((s, j) => j === i ? { ...s, name: e.target.value } : s))}
+                          onChange={(e) =>
+                            setSkills(
+                              skills.map((s, j) =>
+                                j === i ? { ...s, name: e.target.value } : s
+                              )
+                            )
+                          }
                         />
                         <input
                           type="number"
                           min="0"
                           max="100"
-                          className="w-16 text-right text-sm font-bold text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-2 py-1"
+                          className="w-16 text-right text-sm font-bold text-gray-700 bg-white border border-gray-200 rounded-xl px-3 py-2 ml-3"
                           value={skill.level}
-                          onChange={(e) => setSkills(skills.map((s, j) => j === i ? { ...s, level: parseInt(e.target.value) || 0 } : s))}
+                          onChange={(e) =>
+                            setSkills(
+                              skills.map((s, j) =>
+                                j === i ? { ...s, level: parseInt(e.target.value) || 0 } : s
+                              )
+                            )
+                          }
                         />
                       </div>
-                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${skill.color}`} style={{ width: `${skill.level}%` }} />
+                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${skill.color}`} style={{ width: `${skill.level}%` }} />
                       </div>
                     </div>
                   ))}
 
-                  <div className="pt-4 border-t border-gray-100">
+                  <div className="pt-5 border-t border-gray-100">
                     <h4 className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
                       <Languages size={14} className="text-gray-400" /> Languages
                     </h4>
@@ -570,7 +646,14 @@ return (
                       className={fieldClass}
                       value={languages.join(', ')}
                       placeholder="Enter languages separated by commas"
-                      onChange={(e) => setLanguages(e.target.value.split(',').map(l => l.trim()).filter(l => l))}
+                      onChange={(e) =>
+                        setLanguages(
+                          e.target.value
+                            .split(',')
+                            .map((l) => l.trim())
+                            .filter((l) => l)
+                        )
+                      }
                     />
                   </div>
                 </>
@@ -578,23 +661,26 @@ return (
                 <>
                   {skills.map((skill, i) => (
                     <div key={i}>
-                      <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center justify-between mb-2">
                         <span className="text-xs font-semibold text-gray-700">{skill.name}</span>
                         <span className="text-[11px] font-bold text-gray-400">{skill.level}%</span>
                       </div>
-                      <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full ${skill.color}`} style={{ width: `${skill.level}%` }} />
+                      <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${skill.color}`} style={{ width: `${skill.level}%` }} />
                       </div>
                     </div>
                   ))}
 
-                  <div className="pt-4 border-t border-gray-100">
+                  <div className="pt-5 border-t border-gray-100">
                     <h4 className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
                       <Languages size={14} className="text-gray-400" /> Languages
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {languages.map((lang, i) => (
-                        <span key={i} className="text-[11px] font-semibold text-gray-600 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-lg">
+                        <span
+                          key={i}
+                          className="text-[11px] font-semibold text-gray-600 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-lg"
+                        >
                           {lang}
                         </span>
                       ))}
@@ -606,24 +692,30 @@ return (
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
-            <div className="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                  <History size={16} className="text-gray-400" /> Recent Activity
-                </h3>
-                <p className="text-xs text-gray-400">Your latest account actions.</p>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-slate-100 text-slate-600 shrink-0">
+                    <History size={16} />
+                  </div>
+                  <h3 className="text-base font-bold text-gray-900">Recent Activity</h3>
+                </div>
+                <button className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
+                  View all <ChevronRight size={13} />
+                </button>
               </div>
-              <button className="text-[11px] font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1 cursor-pointer">
-                View all <ChevronRight size={13} />
-              </button>
+              <p className="text-xs text-gray-400 mt-1.5">Your latest account actions.</p>
             </div>
-            <div className="p-6 space-y-1">
+            <div className="p-2">
               {activity.map((act, i) => {
                 const Icon = act.icon;
                 return (
-                  <div key={i} className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
-                    <span className={`p-2 rounded-lg ${act.color}`}>
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 py-3 px-4 border-b border-gray-50 last:border-0"
+                  >
+                    <span className={`p-2 rounded-lg shrink-0 ${act.color}`}>
                       <Icon size={15} />
                     </span>
                     <div className="flex-1 min-w-0">
@@ -640,79 +732,153 @@ return (
         {/* RIGHT COLUMN */}
         <div className="space-y-6">
           {/* ACCOUNT SECURITY */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900">Account Security</h3>
-              <p className="text-xs text-gray-400">Manage your password, devices, and security preferences.</p>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-rose-50 text-rose-600 shrink-0">
+                  <ShieldCheck size={16} />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">Account Security</h3>
+              </div>
+              <p className="text-xs text-gray-400 ml-9 mt-1.5">
+                Manage your password, devices, and security preferences.
+              </p>
             </div>
             <div className="p-6 space-y-6">
+              {/* Two-Factor Auth Toggle */}
+              <div className="flex items-center justify-between py-2">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 rounded-lg bg-blue-50 text-blue-600 mt-0.5">
+                    <Fingerprint size={16} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-gray-900">Two-Factor Authentication</p>
+                    <p className="text-[10px] text-gray-400 mt-0.5">Add an extra security step at sign-in.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleToggle('twoFactor')}
+                  className={`relative inline-flex h-5 w-10 items-center rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${
+                    toggles.twoFactor ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                  title={toggles.twoFactor ? 'Turn off 2FA' : 'Turn on 2FA'}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                      toggles.twoFactor ? 'translate-x-5' : 'translate-x-0.5'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Change Password */}
               <div>
                 <h4 className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
                   <KeyRound size={14} className="text-gray-400" /> Change Password
                 </h4>
                 <div className="space-y-3">
-                  <input type="password" placeholder="Current password" className={fieldClass} />
-                  <input type="password" placeholder="New password" className={fieldClass} />
-                  <input type="password" placeholder="Confirm new password" className={fieldClass} />
-                  <button className="w-full bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer">
-                    Update Password
-                  </button>
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Current password"
+                    className={fieldClass}
+                  />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="New password"
+                    className={fieldClass}
+                  />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Confirm new password"
+                    className={fieldClass}
+                  />
+                  <div className="flex items-center justify-between gap-3">
+                    <button
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-gray-800 cursor-pointer"
+                    >
+                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                      <span>{showPassword ? 'Hide' : 'Show'} password</span>
+                    </button>
+                    <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer">
+                      Update Password
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              {/* ACTIVE SESSIONS (commented out) */}
-              {/* <div>
+              {/* Active Sessions */}
+              <div>
                 <h4 className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
                   <Smartphone size={14} className="text-gray-400" /> Active Sessions
                 </h4>
-                <div className="space-y-2.5">
+                <div className="space-y-3">
                   {sessions.map((s, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-3.5 bg-gray-50 rounded-xl border border-gray-100"
+                    >
                       <div className="flex items-center gap-2.5">
-                        <div className={`p-1.5 rounded-lg ${s.current ? 'bg-blue-600 text-white' : 'bg-white text-gray-500 border border-gray-200'}`}>
-                          <Smartphone size={14} />
+                        <div
+                          className={`p-1.5 rounded-lg ${
+                            s.current
+                              ? 'bg-blue-600 text-white'
+                              : 'bg-white text-gray-500 border border-gray-200'
+                          }`}
+                        >
+                          <Smartphone size={15} />
                         </div>
                         <div>
                           <p className="text-xs font-semibold text-gray-800">{s.device}</p>
                           <p className="text-[10px] text-gray-400 mt-0.5">{s.detail}</p>
                         </div>
                       </div>
-                      {s.current && (
+                      {s.current ? (
                         <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">
                           Current
                         </span>
+                      ) : (
+                        <button className="text-[10px] font-semibold text-rose-600 hover:underline cursor-pointer">
+                          Revoke
+                        </button>
                       )}
                     </div>
                   ))}
                 </div>
                 <button className="mt-3 w-full flex items-center justify-center gap-2 border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-600 text-xs font-semibold py-2.5 rounded-xl transition-colors cursor-pointer">
-                  <LogOut size={14} /> Sign out
+                  <LogOut size={14} />
+                  Sign out all sessions
                 </button>
-              </div> */}
+              </div>
             </div>
           </div>
 
-          {/* NOTIFICATIONS (commented out) */}
-          {/*
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+          {/* NOTIFICATIONS */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                  <Bell size={16} className="text-gray-400" /> Notifications
-                </h3>
-              <p className="text-xs text-gray-400">Choose what updates you receive.</p>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-amber-50 text-amber-600 shrink-0">
+                  <Bell size={16} />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">Notifications</h3>
+              </div>
+              <p className="text-xs text-gray-400 ml-9 mt-1.5">Choose what updates you receive.</p>
             </div>
-            <div className="p-6 space-y-4">
+            <div className="p-6 space-y-1">
               {[
-                { key: 'twoFactor', label: 'Two-Factor Authentication', desc: 'Require an extra security step at sign-in', icon: Fingerprint },
-                { key: 'emailNotifs', label: 'Email Notifications', desc: 'Product updates and weekly summaries', icon: Mail },
-                { key: 'securityAlerts', label: 'Security Alerts', desc: 'Critical events like new sign-in attempts', icon: ShieldCheck },
-                { key: 'marketing', label: 'Product Updates & Tips', desc: 'Occasional announcements for new features', icon: Sparkles },
+                { key: 'twoFactor', label: 'Two-Factor Authentication', desc: 'Security prompts for new devices and logins', icon: Fingerprint, iconColor: 'text-blue-600 bg-blue-50' },
+                { key: 'emailNotifs', label: 'Email Notifications', desc: 'Product updates and weekly summaries', icon: Mail, iconColor: 'text-emerald-600 bg-emerald-50' },
+                { key: 'securityAlerts', label: 'Security Alerts', desc: 'Critical events like new sign-in attempts', icon: ShieldCheck, iconColor: 'text-rose-600 bg-rose-50' },
+                { key: 'weeklyDigest', label: 'Weekly Executive Digest', desc: 'Monday summary of revenue, headcount, and deals', icon: Sparkles, iconColor: 'text-amber-600 bg-amber-50' },
               ].map((n) => {
                 const Icon = n.icon;
                 return (
-                  <div key={n.key} className="flex items-center justify-between py-2.5 border-b border-gray-50 last:border-0">
+                  <div
+                    key={n.key}
+                    className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0"
+                  >
                     <div className="flex items-center gap-3">
-                      <div className="p-2 rounded-lg bg-gray-50 text-gray-600">
+                      <div className={`p-2 rounded-lg shrink-0 ${n.iconColor}`}>
                         <Icon size={15} />
                       </div>
                       <div>
@@ -722,33 +888,43 @@ return (
                     </div>
                     <button
                       onClick={() => handleToggle(n.key)}
-                      className={`w-9 h-5 rounded-full p-0.5 transition-colors cursor-pointer flex items-center ${
-                        toggles[n.key] ? 'bg-blue-600 justify-end' : 'bg-gray-200 justify-start'
+                      className={`relative inline-flex h-5 w-10 items-center rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${
+                        toggles[n.key] ? 'bg-blue-600' : 'bg-gray-200'
                       }`}
                       title={toggles[n.key] ? 'Turn off' : 'Turn on'}
                     >
-                      <span className="w-4 h-4 bg-white rounded-full shadow-sm transition-all" />
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition ${
+                          toggles[n.key] ? 'translate-x-5' : 'translate-x-0.5'
+                        }`}
+                      />
                     </button>
                   </div>
                 );
               })}
             </div>
           </div>
-          */}
-{/* ACHIEVEMENTS */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+
+          {/* ACHIEVEMENTS */}
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="px-6 py-5 border-b border-gray-100">
-              <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <GraduationCap size={16} className="text-gray-400" /> Achievements & Badges
-              </h3>
-              <p className="text-xs text-gray-400">Milestones you've unlocked.</p>
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-lg bg-purple-50 text-purple-600 shrink-0">
+                  <Crown size={16} />
+                </div>
+                <h3 className="text-base font-bold text-gray-900">Achievements &amp; Badges</h3>
+              </div>
+              <p className="text-xs text-gray-400 ml-9 mt-1.5">Milestones you have unlocked.</p>
             </div>
             <div className="p-6 grid grid-cols-2 gap-3">
               {achievements.map((a, i) => {
                 const Icon = a.icon;
                 return (
-                  <div key={i} className={`p-3 rounded-xl border ${a.color} flex flex-col items-center text-center gap-1.5`}>
-                    <Icon size={20} />
+                  <div
+                    key={i}
+                    className={`p-4 rounded-xl border ${a.color} flex flex-col items-center text-center gap-2 transition-all hover:scale-105`}
+                  >
+                    <Icon size={22} />
                     <span className="text-[10px] font-bold">{a.label}</span>
                   </div>
                 );
@@ -759,20 +935,49 @@ return (
 
         {/* Save toast */}
         {saved && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-emerald-600 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg shadow-emerald-600/30">
-            <CheckCircle2 size={15} />
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-emerald-600 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg shadow-emerald-600/30">
+            <CheckCircle2 size={16} />
             <span>Profile updated successfully!</span>
           </div>
         )}
 
         {/* Save error toast */}
         {saveError && (
-          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2 bg-rose-600 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg shadow-rose-600/30">
-            <X size={15} />
+          <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-rose-600 text-white text-xs font-semibold px-4 py-3 rounded-xl shadow-lg shadow-rose-600/30">
+            <X size={16} />
             <span>{saveError}</span>
           </div>
         )}
       </div>
+
+      {/* Action Bar (shown only in edit mode) */}
+      {isEditing && (
+        <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-6 py-4 shadow-lg shadow-gray-900/5 z-40">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs text-gray-500">
+              <Pencil size={14} />
+              <span>Editing profile — changes will be saved to your account</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={cancelEdit}
+                className="flex items-center gap-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2.5 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              >
+                <X size={14} />
+                <span>Cancel</span>
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saving}
+                className={`flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl text-xs font-semibold shadow-md shadow-blue-500/30 transition-all ${saving ? 'opacity-60 cursor-not-allowed' : ''}`}
+              >
+                <Save size={14} />
+                <span>{saving ? 'Saving...' : 'Save Changes'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
