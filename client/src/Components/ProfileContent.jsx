@@ -692,7 +692,7 @@ const ProfileContent = () => {
           </div>
 
           {/* Recent Activity */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+          {/* <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -726,7 +726,7 @@ const ProfileContent = () => {
                 );
               })}
             </div>
-          </div>
+          </div> */}
         </div>
 
         {/* RIGHT COLUMN */}
@@ -746,7 +746,7 @@ const ProfileContent = () => {
             </div>
             <div className="p-6 space-y-6">
               {/* Two-Factor Auth Toggle */}
-              <div className="flex items-center justify-between py-2">
+              {/* <div className="flex items-center justify-between py-2">
                 <div className="flex items-start gap-3">
                   <div className="p-2 rounded-lg bg-blue-50 text-blue-600 mt-0.5">
                     <Fingerprint size={16} />
@@ -769,7 +769,7 @@ const ProfileContent = () => {
                     }`}
                   />
                 </button>
-              </div>
+              </div> */}
 
               {/* Change Password */}
               <div>
@@ -808,7 +808,7 @@ const ProfileContent = () => {
               </div>
 
               {/* Active Sessions */}
-              <div>
+              {/* <div>
                 <h4 className="text-xs font-bold text-gray-700 mb-3 flex items-center gap-2">
                   <Smartphone size={14} className="text-gray-400" /> Active Sessions
                 </h4>
@@ -849,12 +849,12 @@ const ProfileContent = () => {
                   <LogOut size={14} />
                   Sign out all sessions
                 </button>
-              </div>
+              </div> */}
             </div>
           </div>
 
           {/* NOTIFICATIONS */}
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
+          {/* <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
             <div className="px-6 py-5 border-b border-gray-100">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-lg bg-amber-50 text-amber-600 shrink-0">
@@ -903,7 +903,7 @@ const ProfileContent = () => {
                 );
               })}
             </div>
-          </div>
+          </div> */}
 
           {/* ACHIEVEMENTS */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
