@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   Package,
   Search,
@@ -80,6 +80,7 @@ export default function Inventories() {
 
   const [menuOpenId, setMenuOpenId] = useState(null);
   const [menuPosition, setMenuPosition] = useState(null);
+  const menuButtonRef = useRef(null);
   const [modal, setModal] = useState(null); // { editing: item | null }
   const [form, setForm] = useState(null);
   const [formError, setFormError] = useState('');
@@ -399,30 +400,19 @@ export default function Inventories() {
                     </span>
                   </td>
                   <td className="py-3 px-4 text-slate-600 font-medium">{formatCurrency(item.price)}</td>
-                  <td className="py-3 px-4 text-right relative">
-                    <button
-                      onClick={() => setMenuOpenId(menuOpenId === item._id ? null : item._id)}
-                      className="text-slate-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
-                    >
-                      <MoreVertical size={18} />
-                    </button>
-                    {menuOpenId === item._id && (
-                      <div className="absolute right-4 top-10 z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 w-32 text-left">
-                        <button
-                          onClick={() => openEditModal(item)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                        >
-                          <Edit size={14} /> Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(item)}
-                          className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50"
-                        >
-                          <Trash2 size={14} /> Delete
-                        </button>
-                      </div>
-                    )}
-                  </td>
+                   <td className="py-3 px-4 text-right">
+                     <button
+                       ref={menuOpenId === item._id ? menuButtonRef : null}
+                       onClick={(e) => {
+                         const rect = e.currentTarget.getBoundingClientRect();
+                         setMenuPosition(rect);
+                         setMenuOpenId(menuOpenId === item._id ? null : item._id);
+                       }}
+                       className="text-slate-400 hover:text-blue-600 p-1.5 rounded-md hover:bg-blue-50 transition-colors"
+                     >
+                       <MoreVertical size={18} />
+                     </button>
+                   </td>
                 </tr>
               ))}
             </tbody>
@@ -430,8 +420,40 @@ export default function Inventories() {
         </div>
       </div>
 
-      {/* Click-away layer to close row menus */}
-      {menuOpenId && <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />}
+       {/* Dropdown menu — positioned with fixed coordinates so it never gets clipped by the table container */}
+       {menuOpenId && menuPosition && (() => {
+         const item = items.find((i) => i._id === menuOpenId);
+         if (!item) return null;
+         const dropdownWidth = 128; // w-32 = 8rem = 128px
+         const gap = 8;
+         const alignRight = window.innerWidth - menuPosition.right >= dropdownWidth;
+         return (
+           <div
+             className="fixed z-20 bg-white rounded-xl shadow-lg border border-slate-200 py-1.5 w-32 text-left"
+             style={{
+               top: menuPosition.bottom + gap,
+               right: alignRight ? window.innerWidth - menuPosition.right : undefined,
+               left: alignRight ? undefined : menuPosition.left,
+             }}
+           >
+             <button
+               onClick={() => openEditModal(item)}
+               className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+             >
+               <Edit size={14} /> Edit
+             </button>
+             <button
+               onClick={() => handleDelete(item)}
+               className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50"
+             >
+               <Trash2 size={14} /> Delete
+             </button>
+           </div>
+         );
+       })()}
+
+       {/* Click-away layer to close row menus */}
+       {menuOpenId && <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />}
 
       {/* Add / Edit Modal */}
       {modal && form && (

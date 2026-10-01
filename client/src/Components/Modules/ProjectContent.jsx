@@ -4,7 +4,7 @@ import {
   Plus, Search, Filter, Calendar, BarChart2, X, CheckSquare,
   Code, MessageSquare, Grid, User, Trash2, Edit3,
   MoreHorizontal, Share2, Layout, FileText,
-  AlertCircle, ChevronLeft, Folder, Briefcase, Activity
+  AlertCircle, ChevronLeft, Folder, Briefcase, Activity, Loader2
 } from 'lucide-react';
 
 const columnsConfig = [
@@ -30,6 +30,7 @@ function ProjectContent({ project, onBack, updateTasks }) {
   const [formCategory, setFormCategory] = useState('Backend');
   const [formDueDate, setFormDueDate] = useState('');
   const [formAssignee, setFormAssignee] = useState('AL');
+  const [isSavingTask, setIsSavingTask] = useState(false);
 
   const handleDragStart = (e, id) => {
     setDraggedTaskId(id);
@@ -67,11 +68,12 @@ function ProjectContent({ project, onBack, updateTasks }) {
 
   const handleSaveTask = async (e) => {
     e.preventDefault();
-    if (!formTitle.trim()) return;
+    if (!formTitle.trim() || isSavingTask) return;
     let catColor = 'bg-purple-100 text-purple-700 border border-purple-200';
     if (formCategory === 'Frontend') catColor = 'bg-teal-100 text-teal-700 border border-teal-200';
     if (formCategory === 'RND' || formCategory === 'Designing') catColor = 'bg-blue-100 text-blue-700 border border-blue-200';
 
+    setIsSavingTask(true);
     try {
       if (editingTaskId) {
         const response = await api.patch(`/projects/tasks/${editingTaskId}`, {
@@ -99,6 +101,8 @@ function ProjectContent({ project, onBack, updateTasks }) {
       setIsModalOpen(false);
     } catch (error) {
       console.error('Error saving task:', error);
+    } finally {
+      setIsSavingTask(false);
     }
   };
 

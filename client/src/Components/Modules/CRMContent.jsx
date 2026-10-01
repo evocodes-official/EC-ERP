@@ -388,7 +388,7 @@ const CRMContent = () => {
         <div className="flex justify-between items-start pr-12">
           <div>
             <h5 className="font-bold text-gray-900 text-xs">{card.title}</h5>
-            <p className="text-blue-600 font-extrabold text-sm mt-1">${card.value.toLocaleString()}</p>
+            <p className="text-blue-600 font-extrabold text-sm mt-1">₹{card.value.toLocaleString()}</p>
           </div>
           <img
             src={card.owner}
@@ -516,7 +516,7 @@ const CRMContent = () => {
               Total Deal Value
             </p>
             <h3 className="text-3xl font-extrabold text-gray-900 mt-2">
-              ${cards.reduce((sum, c) => sum + c.value, 0).toLocaleString()}
+              ₹{cards.reduce((sum, c) => sum + c.value, 0).toLocaleString()}
             </h3>
             <p className="text-xs font-semibold text-emerald-600 mt-2.5 flex items-center gap-1">
               <TrendingUp size={13} />
@@ -659,7 +659,7 @@ const CRMContent = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Deal Value</p>
-                  <p className="text-2xl font-extrabold text-blue-600">${selectedCard.value.toLocaleString()}</p>
+                  <p className="text-2xl font-extrabold text-blue-600">₹{selectedCard.value.toLocaleString()}</p>
                 </div>
                 <div className="bg-gray-50 rounded-2xl p-4 border border-gray-100">
                   <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-1">Stage</p>

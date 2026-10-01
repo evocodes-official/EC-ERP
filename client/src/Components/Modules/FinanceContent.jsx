@@ -711,7 +711,6 @@ export default function FinanceContent() {
       {modal && form && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4"
-          onClick={closeModal}
         >
           <div
             className="bg-white w-full max-w-md rounded-2xl shadow-xl border border-slate-200"

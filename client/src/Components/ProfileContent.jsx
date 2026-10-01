@@ -91,6 +91,7 @@ const ProfileContent = () => {
   const [saveError, setSaveError] = useState('');
   const [saving, setSaving] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState('');
+  const [avatarError, setAvatarError] = useState(false);
   const fileInputRef = useRef(null);
 
   const [skills, setSkills] = useState(DEFAULT_PROFILE.skills);
@@ -143,8 +144,11 @@ const ProfileContent = () => {
     if (!file) return;
     const reader = new FileReader();
     reader.onloadend = () => {
-      setAvatarPreview(reader.result);
-      setForm((f) => ({ ...f, picture: reader.result }));
+      const dataUrl = reader.result;
+      setAvatarPreview(dataUrl);
+      setAvatarError(false);
+      setForm((f) => ({ ...f, picture: dataUrl }));
+      setUser((prev) => ({ ...prev, picture: dataUrl }));
     };
     reader.readAsDataURL(file);
   };
@@ -152,12 +156,14 @@ const ProfileContent = () => {
   const startEdit = () => {
     setForm({ ...user });
     setAvatarPreview('');
+    setAvatarError(false);
     setIsEditing(true);
   };
 
   const cancelEdit = () => {
     setForm({ ...user });
     setAvatarPreview('');
+    setAvatarError(false);
     setIsEditing(false);
   };
 
@@ -292,21 +298,33 @@ return (
 
         {/* Profile header body */}
         <div className="px-5 sm:px-8 pb-6 -mt-14 sm:-mt-16">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-            {/* Avatar */}
-            <div className="relative shrink-0">
-              <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gray-100">
-                <img
-                  src={avatarPreview || user.picture}
-                  alt={user.name}
-                  className="w-full h-full object-cover"
-                  onError={(e) => (e.currentTarget.style.display = 'none')}
-                />
-                {!avatarPreview && !user.picture && (
-                  <div className="w-full h-full flex items-center justify-center text-gray-300">
-                    <Users size={48} />
-                  </div>
-                )}
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+{/* Avatar */}
+             <div className="relative shrink-0">
+               <div className="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl border-4 border-white shadow-xl overflow-hidden bg-gray-100">
+                 {!avatarError && avatarPreview ? (
+                   <img
+                     src={avatarPreview}
+                     alt={user.name}
+                     className="w-full h-full object-cover"
+                     onError={() => setAvatarError(true)}
+                   />
+                 ) : avatarPreview ? (
+                   <div className="w-full h-full flex items-center justify-center text-gray-300">
+                     <Users size={48} />
+                   </div>
+                 ) : user.picture ? (
+                   <img
+                     src={user.picture}
+                     alt={user.name}
+                     className="w-full h-full object-cover"
+                     onError={() => setAvatarError(true)}
+                   />
+                 ) : (
+                   <div className="w-full h-full flex items-center justify-center text-gray-300">
+                     <Users size={48} />
+                   </div>
+                 )}
               </div>
               {/* Camera edit button */}
               <button
@@ -320,7 +338,7 @@ return (
               <span className="absolute top-2 right-2 w-4 h-4 bg-emerald-500 border-2 border-white rounded-full" title="Online" />
             </div>
 
-            <div className="flex-1 min-w-0 pt-2 sm:pt-0">
+            <div className="flex-1 min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">{user.name}</h2>
                 <BadgeCheck size={18} className="text-blue-600" />
@@ -341,7 +359,7 @@ return (
             </div>
 
             {/* Edit / Save actions */}
-            <div className="shrink-0 pt-2 sm:pt-0">
+            <div className="shrink-0">
               {isEditing ? (
                 <div className="flex items-center gap-2">
                   <button

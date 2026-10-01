@@ -25,7 +25,7 @@ export default function Sidebar({ activeTab, setActiveTab, setIsSidebarOpen }) {
     { id: 'projects', name: 'Projects', icon: FolderKanban },
     { id: 'inventories', name: 'Inventories', icon: Package }, 
     // { id: 'reports', name: 'Reports', icon: BarChart3 },
-    // { id: 'settings', name: 'Settings', icon: Settings }
+    { id: 'settings', name: 'Settings', icon: Settings }
   ];
 
   return (

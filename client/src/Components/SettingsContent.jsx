@@ -28,8 +28,8 @@ const SettingsContent = () => {
     enterpriseDomain: 'evo-erp.com',
     supportEmail: 'support@evo-erp.com',
     timezone: '(UTC-05:00) Eastern Time (US & Canada)',
-    defaultCurrency: 'USD ($) - US Dollar',
-    fiscalYearStart: 'January 1st',
+    defaultCurrency: 'INR (₹) - Indian Rupee',
+    fiscalYearStart: 'Jan 1 - Dec 31',
     apiKey: 'evo_live_89f92a41b7e0982c44',
   });
 
@@ -267,9 +267,10 @@ const SettingsContent = () => {
                   onChange={handleInputChange}
                   className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer"
                 >
-                  <option>USD ($) - US Dollar</option>
-                  <option>EUR (€) - Euro</option>
-                  <option>GBP (£) - British Pound</option>
+                   <option>INR (₹) - Indian Rupee</option>
+                   <option>USD ($) - US Dollar</option>
+                   <option>EUR (€) - Euro</option>
+                   <option>GBP (£) - British Pound</option>
                 </select>
               </div>
 
@@ -281,9 +282,8 @@ const SettingsContent = () => {
                   onChange={handleInputChange}
                   className="w-full bg-gray-50 border border-gray-200 px-3.5 py-2.5 rounded-xl text-xs text-gray-800 cursor-pointer"
                 >
-                  <option>January 1st</option>
-                  <option>April 1st</option>
-                  <option>October 1st</option>
+                   <option>Jan 1 - Dec 31</option>
+                   <option>Apr 1 - Mar 31</option>
                 </select>
               </div>
 
