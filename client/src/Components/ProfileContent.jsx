@@ -56,6 +56,13 @@ const DEFAULT_PROFILE = {
   languages: ['English (Fluent)', 'Tamil (Native)', 'Hindi (Conversational)'],
 };
 
+// API Endpoints — replace empty strings with actual endpoints when provided
+  const API_ENDPOINTS = {
+    profile: '',        // e.g., '/profile' or '/api/user/profile'
+    password: '/auth/change-password',       // Backend endpoint for password change
+    avatar: '',         // e.g., '/profile/avatar' or '/api/user/avatar'
+  };
+
 const ProfileContent = () => {
   // Load the signed-in user (stored on login) or fall back to a demo profile
   const getStoredUser = () => {
@@ -94,6 +101,14 @@ const ProfileContent = () => {
   const [avatarPreview, setAvatarPreview] = useState('');
   const [avatarError, setAvatarError] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [updatingPassword, setUpdatingPassword] = useState(false);
   const fileInputRef = useRef(null);
 
   const [skills, setSkills] = useState(DEFAULT_PROFILE.skills);
@@ -107,7 +122,8 @@ const ProfileContent = () => {
     const fetchProfile = async () => {
       try {
         const config = stored?.email ? { params: { email: stored.email } } : {};
-        const res = await api.get('/profile', config);
+        const endpoint = API_ENDPOINTS.profile || '/profile';
+        const res = await api.get(endpoint, config);
         const data = res.data?.data;
 
         if (isMounted && data) {
@@ -172,7 +188,6 @@ const ProfileContent = () => {
   const handleSave = async () => {
     const updated = { ...form, picture: avatarPreview || form.picture };
 
-    // Email is the identifier required by the backend (PUT /api/profile)
     if (!updated.email) {
       setSaveError('Email is required to save your profile');
       setTimeout(() => setSaveError(''), 3000);
@@ -182,8 +197,8 @@ const ProfileContent = () => {
     setSaving(true);
     try {
       const payload = {
-        name: updated.name,
         email: updated.email,
+        name: updated.name,
         picture: updated.picture,
         role: updated.role,
         department: updated.department,
@@ -196,7 +211,8 @@ const ProfileContent = () => {
         languages,
       };
 
-      const res = await api.put('/profile', payload);
+      const endpoint = API_ENDPOINTS.profile || '/profile';
+      const res = await api.put(endpoint, payload);
       const data = res.data?.data;
 
       // Sync UI with the saved document from the server
@@ -225,6 +241,57 @@ const ProfileContent = () => {
       setTimeout(() => setSaveError(''), 3000);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Please fill in all fields');
+      setTimeout(() => setPasswordError(''), 3000);
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters');
+      setTimeout(() => setPasswordError(''), 3000);
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirm password do not match');
+      setTimeout(() => setPasswordError(''), 3000);
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      setPasswordError('New password must be different from current password');
+      setTimeout(() => setPasswordError(''), 3000);
+      return;
+    }
+
+    setUpdatingPassword(true);
+    setPasswordError('');
+    setPasswordSuccess(false);
+
+    try {
+      const endpoint = API_ENDPOINTS.password || '/auth/change-password';
+      await api.post(endpoint, {
+        email: user.email,
+        currentPassword,
+        newPassword,
+        confirmPassword,
+      });
+
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordSuccess(true);
+      setTimeout(() => setPasswordSuccess(false), 3000);
+    } catch (err) {
+      setPasswordError(err?.response?.data?.message || 'Failed to update password');
+      setTimeout(() => setPasswordError(''), 3000);
+    } finally {
+      setUpdatingPassword(false);
     }
   };
 
@@ -780,18 +847,36 @@ const ProfileContent = () => {
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Current password"
-                    className={fieldClass}
+                    className={`${fieldClass} ${passwordError && passwordError.includes('Current') ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''}`}
+                    value={passwordForm.currentPassword}
+                    onChange={(e) => setPasswordForm((p) => ({ ...p, currentPassword: e.target.value }))}
                   />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="New password"
-                    className={fieldClass}
+                    className={`${fieldClass} ${passwordError && passwordError.includes('New') ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''}`}
+                    value={passwordForm.newPassword}
+                    onChange={(e) => setPasswordForm((p) => ({ ...p, newPassword: e.target.value }))}
                   />
                   <input
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Confirm new password"
-                    className={fieldClass}
+                    className={`${fieldClass} ${passwordError && passwordError.includes('match') ? 'border-rose-400 focus:border-rose-500 focus:ring-rose-200' : ''}`}
+                    value={passwordForm.confirmPassword}
+                    onChange={(e) => setPasswordForm((p) => ({ ...p, confirmPassword: e.target.value }))}
                   />
+                  {passwordError && (
+                    <p className="text-[11px] text-rose-600 flex items-center gap-1">
+                      <X size={12} />
+                      {passwordError}
+                    </p>
+                  )}
+                  {passwordSuccess && (
+                    <p className="text-[11px] text-emerald-600 flex items-center gap-1">
+                      <CheckCircle2 size={12} />
+                      Password updated successfully!
+                    </p>
+                  )}
                   <div className="flex items-center justify-between gap-3">
                     <button
                       onClick={() => setShowPassword(!showPassword)}
@@ -800,8 +885,16 @@ const ProfileContent = () => {
                       {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
                       <span>{showPassword ? 'Hide' : 'Show'} password</span>
                     </button>
-                    <button className="flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer">
-                      Update Password
+                    <button
+                      onClick={handlePasswordUpdate}
+                      disabled={updatingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword}
+                      className={`flex-1 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold py-2.5 rounded-xl shadow-md shadow-blue-500/20 transition-all cursor-pointer ${
+                        updatingPassword || !passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword
+                          ? 'opacity-60 cursor-not-allowed'
+                          : ''
+                      }`}
+                    >
+                      {updatingPassword ? 'Updating...' : 'Update Password'}
                     </button>
                   </div>
                 </div>
